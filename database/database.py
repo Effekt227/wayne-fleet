@@ -4,20 +4,27 @@ SQLAlchemy setup and session management
 """
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL as SA_URL
 from sqlalchemy.orm import sessionmaker, scoped_session
 from .models import Base
 import os
+from urllib.parse import urlparse
 
 # Dual-mode: PostgreSQL v cloudu (env DATABASE_URL), SQLite lokálně
 _cloud_url = os.environ.get('DATABASE_URL', '')
 if _cloud_url:
-    # Supabase vrací "postgres://" ale SQLAlchemy potřebuje "postgresql+pg8000://"
-    if _cloud_url.startswith('postgres://'):
-        _cloud_url = _cloud_url.replace('postgres://', 'postgresql+pg8000://', 1)
-    elif _cloud_url.startswith('postgresql://'):
-        _cloud_url = _cloud_url.replace('postgresql://', 'postgresql+pg8000://', 1)
-    DATABASE_URL = _cloud_url
-    engine = create_engine(DATABASE_URL, echo=False, connect_args={"ssl_context": True})
+    # Parsujeme URL a předáme parametry explicitně (pg8000 ořezává username na tečce)
+    _parsed = urlparse(_cloud_url)
+    _sa_url = SA_URL.create(
+        drivername="postgresql+pg8000",
+        username=_parsed.username,
+        password=_parsed.password,
+        host=_parsed.hostname,
+        port=_parsed.port,
+        database=_parsed.path.lstrip('/'),
+    )
+    DATABASE_URL = str(_sa_url)
+    engine = create_engine(_sa_url, echo=False, connect_args={"ssl_context": True})
     DB_PATH = '(PostgreSQL cloud)'
 else:
     DB_PATH = os.path.join(os.path.dirname(__file__), 'wayne_fleet.db')
