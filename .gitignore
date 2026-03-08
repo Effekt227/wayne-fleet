@@ -1,0 +1,29 @@
+# Tajné soubory — NIKDY nenahrávat na GitHub
+.streamlit/secrets.toml
+config_bank.json
+WayneFleetAPI.p12
+
+# Databáze — v cloudu je Supabase, lokální soubor nechceme na GitHubu
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Zálohy
+backups/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtuální prostředí
+venv/
+.venv/
+env/
+
+# Windows
+Thumbs.db
+desktop.ini
