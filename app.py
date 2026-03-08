@@ -6,6 +6,8 @@ Complete system with real database integration
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+from database.database import init_db
+init_db()
 from database.crud_cars import get_all_cars, get_active_cars, create_car, update_car, get_car_stats
 from database.crud_drivers import get_all_drivers, get_active_drivers, create_driver, update_driver
 from database.crud_payments import zadat_platbu, get_payment_info, je_splaceno
