@@ -24,7 +24,15 @@ if _cloud_url:
         database=_parsed.path.lstrip('/'),
     )
     DATABASE_URL = str(_sa_url)
-    engine = create_engine(_sa_url, echo=False, connect_args={"ssl_context": True})
+    engine = create_engine(
+        _sa_url,
+        echo=False,
+        connect_args={"ssl_context": True},
+        pool_size=3,
+        max_overflow=2,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
     DB_PATH = '(PostgreSQL cloud)'
 else:
     DB_PATH = os.path.join(os.path.dirname(__file__), 'wayne_fleet.db')
