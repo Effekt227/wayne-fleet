@@ -68,6 +68,7 @@ class Driver(Base):
 
     # Osobní údaje
     adresa = Column(String(255), nullable=True)    # trvalá adresa
+    cislo_uctu = Column(String(34), nullable=True) # číslo účtu (CZ nebo IBAN)
     rc = Column(String(20), nullable=True)         # rodné číslo
     cislo_op = Column(String(50), nullable=True)   # číslo občanského průkazu
     datum_narozeni = Column(Date, nullable=True)   # datum narození

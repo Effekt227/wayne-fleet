@@ -370,6 +370,7 @@ def render_driver_detail(driver_id: int):
                 edit_email = st.text_input("Email", value=driver.email or "")
                 edit_telefon = st.text_input("Telefon", value=driver.telefon or "")
                 edit_adresa = st.text_input("Trvalá adresa", value=driver.adresa or "")
+                edit_cislo_uctu = st.text_input("Číslo účtu (CZ / IBAN)", value=driver.cislo_uctu or "")
             with col2:
                 edit_datum = st.date_input("Datum nástupu", value=driver.datum_nastupu)
                 edit_status = st.selectbox(
@@ -427,6 +428,7 @@ def render_driver_detail(driver_id: int):
                     status=edit_status,
                     kauce_celkem=edit_kauce_celkem,
                     adresa=edit_adresa,
+                    cislo_uctu=edit_cislo_uctu,
                     rc=edit_rc,
                     cislo_op=edit_cislo_op,
                     datum_narozeni=edit_datum_narozeni,
