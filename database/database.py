@@ -11,9 +11,11 @@ import os
 # Dual-mode: PostgreSQL v cloudu (env DATABASE_URL), SQLite lokálně
 _cloud_url = os.environ.get('DATABASE_URL', '')
 if _cloud_url:
-    # Supabase vrací "postgres://" ale SQLAlchemy potřebuje "postgresql://"
+    # Supabase vrací "postgres://" ale SQLAlchemy potřebuje "postgresql+pg8000://"
     if _cloud_url.startswith('postgres://'):
-        _cloud_url = _cloud_url.replace('postgres://', 'postgresql://', 1)
+        _cloud_url = _cloud_url.replace('postgres://', 'postgresql+pg8000://', 1)
+    elif _cloud_url.startswith('postgresql://'):
+        _cloud_url = _cloud_url.replace('postgresql://', 'postgresql+pg8000://', 1)
     DATABASE_URL = _cloud_url
     engine = create_engine(DATABASE_URL, echo=False)
     DB_PATH = '(PostgreSQL cloud)'
