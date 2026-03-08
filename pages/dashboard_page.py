@@ -4,13 +4,13 @@ Hlavní přehled: KPI, stav flotily, dnešní směny, upozornění
 """
 
 import streamlit as st
-from datetime import date, timedelta
-from database.crud_cars import get_all_cars, get_car_stats
-from database.crud_drivers import get_all_drivers
-from database.crud_finance_records import get_monthly_summary, get_pending_records
-from database.crud_calendar import get_week_assignments
-from database.crud_services import get_next_service
-from database.crud_todos import get_all_todos, create_todo, set_todo_done, delete_todo, sync_overdue_todos, sync_nabor_todos, PRIORITY_ORDER
+from datetime import date, timedelta, datetime
+from database.crud_todos import create_todo, set_todo_done, delete_todo, sync_overdue_todos, sync_nabor_todos, PRIORITY_ORDER
+from utils.cached_queries import (
+    cached_cars, cached_drivers, cached_car_stats,
+    cached_week_assignments, cached_monthly_summary,
+    cached_pending_records, cached_next_service, cached_todos,
+)
 
 
 def _get_monday(d: date) -> date:
@@ -24,11 +24,15 @@ _PRIORITY_COLOR = {'high': '#ef4444', 'medium': '#f5c518', 'low': '#10b981'}
 
 
 def _render_todo_widget():
-    # Automaticky přidat nezaplacené záznamy po splatnosti + chybějící nábor položky
-    sync_overdue_todos()
-    sync_nabor_todos()
+    # Sync todos max 1x za minutu (ne při každém renderu)
+    last_sync = st.session_state.get('todos_synced_at')
+    if not last_sync or (datetime.now() - last_sync).seconds > 60:
+        sync_overdue_todos()
+        sync_nabor_todos()
+        st.session_state['todos_synced_at'] = datetime.now()
+        cached_todos.clear()
 
-    todos = get_all_todos()
+    todos = cached_todos()
 
     # Rozdělit na hotové / nehotové a seřadit podle priority
     pending_todos = sorted(
@@ -140,17 +144,17 @@ def _render_todo_widget():
 def render_dashboard():
     today = date.today()
 
-    # ── Načtení dat ──────────────────────────────────────────────────
-    all_cars = get_all_cars()
-    all_drivers = get_all_drivers()
+    # ── Načtení dat (z cache) ──────────────────────────────────────────
+    all_cars = cached_cars()
+    all_drivers = cached_drivers()
     active_cars = [c for c in all_cars if c.status == 'active']
     active_drivers = [d for d in all_drivers if d.status == 'active']
 
-    this_month = get_monthly_summary(today.year, today.month)
-    pending = get_pending_records()
+    this_month = cached_monthly_summary(today.year, today.month)
+    pending = cached_pending_records()
 
     monday = _get_monday(today)
-    week_data = get_week_assignments(monday)  # {car_id: {datum: [shift_dict], '__weekly__': [...]}}
+    week_data = cached_week_assignments(monday)  # {car_id: {datum: [shift_dict], '__weekly__': [...]}}
 
     # Shift_dict pro dnešní den: běžné směny + týdenní pronájmy
     def get_today_shifts_for_car(car_id):
@@ -227,7 +231,7 @@ def render_dashboard():
             st.info("Žádná auta v databázi.")
         else:
             for car in all_cars:
-                stats = get_car_stats(car.id) or {}
+                stats = cached_car_stats(car.id) or {}
                 today_shifts = get_today_shifts_for_car(car.id)
 
                 status_color = {
@@ -280,7 +284,7 @@ def render_dashboard():
 
                 # Příští servis
                 try:
-                    next_svc = get_next_service(car.id) or {}
+                    next_svc = cached_next_service(car.id) or {}
                 except Exception:
                     next_svc = {}
                 svc_html = ""

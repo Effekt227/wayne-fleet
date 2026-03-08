@@ -5,7 +5,8 @@ Detailní karta auta: finance, splátky, servisní historie, editace
 
 import streamlit as st
 from datetime import date, datetime
-from database.crud_cars import get_car_by_id, get_car_stats, update_car
+from database.crud_cars import get_car_by_id, update_car
+from utils.cached_queries import cached_car_stats as get_car_stats
 from database.crud_payments import zadat_platbu
 from database.crud_services import (
     get_car_services, create_service, delete_service,

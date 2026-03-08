@@ -5,7 +5,7 @@ Podporuje: ranní/večerní 12h směny, celý den 24h, týdenní pronájem, serv
 
 import streamlit as st
 from datetime import datetime, timedelta
-from database.crud_cars import get_all_cars
+from utils.cached_queries import cached_cars as get_all_cars
 from database.crud_drivers import get_active_drivers
 from database.crud_calendar import (
     get_week_assignments,

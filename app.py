@@ -10,8 +10,9 @@ from database.database import init_db
 if 'db_initialized' not in st.session_state:
     init_db()
     st.session_state['db_initialized'] = True
-from database.crud_cars import get_all_cars, get_active_cars, create_car, update_car, get_car_stats
-from database.crud_drivers import get_all_drivers, get_active_drivers, create_driver, update_driver
+from database.crud_cars import get_active_cars, create_car, update_car
+from database.crud_drivers import get_active_drivers, create_driver, update_driver
+from utils.cached_queries import cached_cars as get_all_cars, cached_drivers as get_all_drivers, cached_car_stats as get_car_stats
 from database.crud_payments import zadat_platbu, get_payment_info, je_splaceno
 from utils.vyuctovani import parse_uber_csv, parse_bolt_csv, generate_driver_invoice_pdf, normalize_name
 from database.crud_drivers import find_driver_by_name
@@ -371,6 +372,7 @@ elif st.session_state['page'] == 'auta':
                             cena=celkova_cena
                         )
                         st.success(f"✅ Auto {car.spz} úspěšně přidáno!")
+                        get_all_cars.clear()
                         st.session_state['show_add_car_form'] = False
                         st.rerun()
                     except Exception as e:
@@ -509,6 +511,8 @@ elif st.session_state['page'] == 'auta':
                                 
                                 update_car(car.id, **update_data)
                                 st.success(f"✅ Auto {edit_spz} úspěšně aktualizováno!")
+                                get_all_cars.clear()
+                                get_car_stats.clear()
                                 st.session_state['edit_car_id'] = None
                                 st.rerun()
                             except Exception as e:
@@ -545,6 +549,8 @@ elif st.session_state['page'] == 'auta':
                             try:
                                 zadat_platbu(car.id, pocet_splatek)
                                 st.success(f"✅ Platba {pocet_splatek} splátek ({castka:,} Kč) zaznamenána!")
+                                get_all_cars.clear()
+                                get_car_stats.clear()
                                 st.session_state['payment_car_id'] = None
                                 st.rerun()
                             except Exception as e:
@@ -609,6 +615,7 @@ elif st.session_state['page'] == 'ridici':
                             datum_nastupu=new_datum
                         )
                         st.success(f"✅ Řidič {driver.jmeno} úspěšně přidán!")
+                        get_all_drivers.clear()
                         st.session_state['show_add_driver_form'] = False
                         st.rerun()
                     except Exception as e:

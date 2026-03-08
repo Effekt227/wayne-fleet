@@ -7,8 +7,7 @@ import io
 import os
 import streamlit as st
 from datetime import date
-from database.crud_drivers import get_all_drivers
-from database.crud_cars import get_all_cars
+from utils.cached_queries import cached_drivers as get_all_drivers, cached_cars as get_all_cars
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm

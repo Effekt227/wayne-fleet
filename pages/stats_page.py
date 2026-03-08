@@ -12,8 +12,8 @@ from database.crud_finance_records import (
     get_monthly_chart_data_range,
     get_monthly_summary,
 )
-from database.crud_cars import get_all_cars, get_car_stats
-from database.crud_drivers import get_all_drivers, get_driver_stats
+from database.crud_drivers import get_driver_stats
+from utils.cached_queries import cached_cars as get_all_cars, cached_car_stats as get_car_stats, cached_drivers as get_all_drivers
 from database.crud_services import get_total_service_cost
 from database.crud_fines import get_driver_fines_summary
 from database.crud_calendar import get_fleet_occupancy_month

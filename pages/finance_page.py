@@ -12,8 +12,7 @@ from database.crud_finance_records import (
     mark_paid, mark_unpaid, delete_record,
     delete_recurring_from, get_monthly_summary,
 )
-from database.crud_drivers import get_all_drivers
-from database.crud_cars import get_all_cars
+from utils.cached_queries import cached_drivers as get_all_drivers, cached_cars as get_all_cars
 
 MESICE_CZ = [
     'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',

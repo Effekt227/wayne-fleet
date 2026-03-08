@@ -7,7 +7,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 from database.crud_drivers import get_driver_by_id, get_driver_stats, update_driver, set_default_car, add_kauce_payment
 from database.crud_finance_records import create_record, get_records
-from database.crud_cars import get_all_cars
+from utils.cached_queries import cached_cars as get_all_cars
 from database.crud_calendar import get_week_assignments
 from database.crud_fines import get_driver_fines, create_fine, add_fine_payment, delete_fine
 
