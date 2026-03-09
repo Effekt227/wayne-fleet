@@ -130,8 +130,8 @@ def get_transactions(
     API max: 90 dní najednou.
     """
     params = {
-        'dateFrom': date_from.strftime('%Y-%m-%d'),
-        'dateTo': date_to.strftime('%Y-%m-%d'),
+        'from': date_from.strftime('%Y-%m-%d'),
+        'to': date_to.strftime('%Y-%m-%d'),
         'page': page,
     }
     return _request('GET', f'/accounts/{account_number}/{currency}/transactions', client_id, params=params)
