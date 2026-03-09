@@ -199,7 +199,7 @@ def _render_calendar_grid(rok: int, mesic: int, by_date: dict, today: date):
                 else:
                     color = '#f59e0b'
 
-                short = r.popis[:12] + ('…' if len(r.popis) > 12 else '')
+                short = f"#{r.id} " + (r.popis[:9] + '…' if len(r.popis) > 9 else r.popis)
                 paid_style = "text-decoration:line-through;" if r.status == 'zaplaceno' else ""
                 indicators += (
                     f"<div style='font-size:0.68rem; color:{color}; white-space:nowrap; "
