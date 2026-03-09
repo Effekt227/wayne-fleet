@@ -11,6 +11,7 @@ from datetime import date, timedelta
 from database.crud_bank import (
     upsert_transactions, get_transactions, get_transaction_stats,
     match_transaction_to_finance, unmatch_transaction, auto_match_transactions,
+    delete_all_transactions,
 )
 from database.crud_finance_records import get_records
 from database.database import init_db
@@ -103,6 +104,13 @@ def render_banka_page():
     col_st2.metric("Nejstarší", stats['oldest'].strftime('%d.%m.%Y') if stats['oldest'] else '—')
     col_st3.metric("Nejnovější", stats['newest'].strftime('%d.%m.%Y') if stats['newest'] else '—')
     col_st4.metric("Nespárovaných", stats['unmatched'])
+
+    with st.expander("🗑️ Smazat všechny transakce z DB"):
+        st.warning("Smaže všechny transakce z databáze. Nelze vrátit zpět.")
+        if st.button("🗑️ Potvrdit smazání", key="bank_delete_all", type="primary"):
+            count = delete_all_transactions()
+            st.success(f"Smazáno {count} transakcí.")
+            st.rerun()
 
     st.markdown("---")
 

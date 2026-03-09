@@ -149,3 +149,18 @@ def auto_match_transactions():
 
         db.commit()
     return matched_count
+
+
+def delete_all_transactions() -> int:
+    """Smaže všechny transakce z DB. Vrátí počet smazaných."""
+    db = SessionLocal()
+    try:
+        count = db.query(BankTransaction).count()
+        db.query(BankTransaction).delete()
+        db.commit()
+        return count
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
