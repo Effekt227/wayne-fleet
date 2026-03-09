@@ -18,7 +18,8 @@ def upsert_transactions(transactions: list[dict]) -> int:
         for txn in transactions:
             ref = txn.get('entry_reference', '')
             if not ref:
-                continue
+                # Platby kartou nemají entryReference — vygeneruj náhradní klíč
+                ref = f"CARD_{txn.get('booking_date')}_{txn.get('amount')}_{txn.get('credit_debit')}_{txn.get('transaction_info', '')[:20]}"
             exists = db.query(BankTransaction).filter(BankTransaction.entry_reference == ref).first()
             if not exists:
                 obj = BankTransaction(
