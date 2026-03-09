@@ -54,3 +54,51 @@ def cached_next_service(car_id: int):
 def cached_todos():
     from database.crud_todos import get_all_todos
     return get_all_todos()
+
+
+@st.cache_resource
+def cached_chart_data(months_back: int, months_forward: int):
+    from database.crud_finance_records import get_monthly_chart_data
+    return get_monthly_chart_data(months_back=months_back, months_forward=months_forward)
+
+
+@st.cache_resource
+def cached_chart_data_range(year_from: int, month_from: int, year_to: int, month_to: int):
+    from database.crud_finance_records import get_monthly_chart_data_range
+    return get_monthly_chart_data_range(year_from, month_from, year_to, month_to)
+
+
+@st.cache_resource
+def cached_driver_stats(driver_id: int):
+    from database.crud_drivers import get_driver_stats
+    return get_driver_stats(driver_id)
+
+
+@st.cache_resource
+def cached_service_cost(car_id: int):
+    from database.crud_services import get_total_service_cost
+    return get_total_service_cost(car_id)
+
+
+@st.cache_resource
+def cached_fines_summary(driver_id: int):
+    from database.crud_fines import get_driver_fines_summary
+    return get_driver_fines_summary(driver_id)
+
+
+@st.cache_resource
+def cached_fleet_occupancy(year: int, month: int):
+    from database.crud_calendar import get_fleet_occupancy_month
+    return get_fleet_occupancy_month(year, month)
+
+
+@st.cache_resource
+def cached_transaction_stats():
+    from database.crud_bank import get_transaction_stats
+    return get_transaction_stats()
+
+
+@st.cache_resource
+def cached_transactions(date_from, date_to, credit_debit, only_unmatched: bool):
+    from database.crud_bank import get_transactions
+    return get_transactions(date_from, date_to, credit_debit, only_unmatched)

@@ -7,16 +7,18 @@ import calendar as cal_mod
 import streamlit as st
 import pandas as pd
 from datetime import date, timedelta
-from database.crud_finance_records import (
-    get_monthly_chart_data,
-    get_monthly_chart_data_range,
-    get_monthly_summary,
+from utils.cached_queries import (
+    cached_cars as get_all_cars,
+    cached_car_stats as get_car_stats,
+    cached_drivers as get_all_drivers,
+    cached_monthly_summary as get_monthly_summary,
+    cached_chart_data as get_monthly_chart_data,
+    cached_chart_data_range as get_monthly_chart_data_range,
+    cached_driver_stats as get_driver_stats,
+    cached_service_cost as get_total_service_cost,
+    cached_fines_summary as get_driver_fines_summary,
+    cached_fleet_occupancy as get_fleet_occupancy_month,
 )
-from database.crud_drivers import get_driver_stats
-from utils.cached_queries import cached_cars as get_all_cars, cached_car_stats as get_car_stats, cached_drivers as get_all_drivers
-from database.crud_services import get_total_service_cost
-from database.crud_fines import get_driver_fines_summary
-from database.crud_calendar import get_fleet_occupancy_month
 
 MESICE_CZ = [
     'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
@@ -73,7 +75,7 @@ def _render_financial_overview():
     )
 
     if mode == "Přehled (13 měs.)":
-        monthly_data = get_monthly_chart_data(months_back=3, months_forward=9)
+        monthly_data = get_monthly_chart_data(3, 9)
         popis_obdobi = f"{_month_label(monthly_data[0])} – {_month_label(monthly_data[-1])} (3 měs. zpět + 9 dopředu)"
 
     elif mode == "Konkrétní měsíc":

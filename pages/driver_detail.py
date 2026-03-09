@@ -7,7 +7,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 from database.crud_drivers import get_driver_by_id, get_driver_stats, update_driver, set_default_car, add_kauce_payment
 from database.crud_finance_records import create_record, get_records
-from utils.cached_queries import cached_cars as get_all_cars, cached_drivers as _cd, cached_pending_records as _cp, cached_monthly_summary as _cs
+from utils.cached_queries import cached_cars as get_all_cars, cached_drivers as _cd, cached_pending_records as _cp, cached_monthly_summary as _cs, cached_driver_stats as _cds, cached_fines_summary as _cfs
 from database.crud_calendar import get_week_assignments
 from database.crud_fines import get_driver_fines, create_fine, add_fine_payment, delete_fine
 
@@ -226,6 +226,7 @@ def render_driver_detail(driver_id: int):
             if st.form_submit_button("➕ Zadat splátku", width='stretch'):
                 add_kauce_payment(driver.id, castka)
                 _cd.clear()
+                _cds.clear()
                 st.success(f"Zaznamenáno {castka:,.0f} Kč")
                 st.rerun()
 
@@ -444,6 +445,7 @@ def render_driver_detail(driver_id: int):
                     nabor_taxi=edit_nabor_taxi,
                 )
                 _cd.clear()
+                _cds.clear()
                 st.success("Řidič aktualizován.")
                 st.rerun()
 

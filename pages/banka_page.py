@@ -9,12 +9,11 @@ import json
 import os
 from datetime import date, timedelta
 from database.crud_bank import (
-    upsert_transactions, get_transactions, get_transaction_stats,
-    match_transaction_to_finance, unmatch_transaction, auto_match_transactions,
-    delete_all_transactions,
+    upsert_transactions, match_transaction_to_finance, unmatch_transaction,
+    auto_match_transactions, delete_all_transactions,
 )
-from database.crud_finance_records import get_records
 from database.database import init_db
+from utils.cached_queries import cached_transaction_stats, cached_transactions, cached_pending_records as _cp
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config_bank.json')
 
@@ -98,7 +97,7 @@ def render_banka_page():
         return
 
     # ── Stav databáze ──────────────────────────────────────────────────────
-    stats = get_transaction_stats()
+    stats = cached_transaction_stats()
     col_st1, col_st2, col_st3, col_st4 = st.columns(4)
     col_st1.metric("Transakcí v DB", stats['total'])
     col_st2.metric("Nejstarší", stats['oldest'].strftime('%d.%m.%Y') if stats['oldest'] else '—')
@@ -109,6 +108,8 @@ def render_banka_page():
         st.warning("Smaže všechny transakce z databáze. Nelze vrátit zpět.")
         if st.button("🗑️ Potvrdit smazání", key="bank_delete_all", type="primary"):
             count = delete_all_transactions()
+            cached_transaction_stats.clear()
+            cached_transactions.clear()
             st.success(f"Smazáno {count} transakcí.")
             st.rerun()
 
@@ -138,6 +139,8 @@ def render_banka_page():
                     parsed = [parse_transaction(t) for t in raw]
                     new_count = upsert_transactions(parsed)
                     auto_n = auto_match_transactions()
+                    cached_transaction_stats.clear()
+                    cached_transactions.clear()
                     st.success(
                         f"Staženo {len(parsed)} transakcí → **{new_count} nových** přidáno do DB."
                         + (f" Automaticky spárováno: {auto_n}." if auto_n else "")
@@ -167,7 +170,7 @@ def render_banka_page():
     elif direction_filter == '🔴 Odchozí':
         cd_filter = 'DBIT'
 
-    transactions = get_transactions(view_from, view_to, cd_filter, only_unmatched)
+    transactions = cached_transactions(view_from, view_to, cd_filter, only_unmatched)
 
     if not transactions:
         st.info("Žádné transakce pro zvolené filtry.")
@@ -183,11 +186,11 @@ def render_banka_page():
 
     st.markdown("")
 
-    # Finance Records pro párování
+    # Finance Records pro párování (z cache)
+    pending = _cp()
     finance_open = {
         f"#{fr.id} | {fr.popis} | {fr.castka_kc:.0f} Kč": fr.id
-        for fr in get_records()
-        if fr.status == 'nezaplaceno'
+        for fr in pending['vydane'] + pending['prijate']
     }
 
     for txn in transactions:
@@ -226,6 +229,8 @@ def render_banka_page():
             if matched_label:
                 if st.button("❌ Zrušit", key=f"unmatch_{txn.id}", width="stretch"):
                     unmatch_transaction(txn.id)
+                    cached_transaction_stats.clear()
+                    cached_transactions.clear()
                     st.rerun()
             else:
                 search = st.text_input("", placeholder="🔍 Hledat...", key=f"search_{txn.id}", label_visibility='collapsed')
@@ -236,6 +241,9 @@ def render_banka_page():
                     if st.button("✅ Párovat", key=f"match_{txn.id}", width="stretch"):
                         match_transaction_to_finance(txn.id, finance_open[sel])
                         _mark_fr_paid(finance_open[sel], txn.booking_date)
+                        cached_transaction_stats.clear()
+                        cached_transactions.clear()
+                        _cp.clear()
                         st.rerun()
 
         st.divider()
