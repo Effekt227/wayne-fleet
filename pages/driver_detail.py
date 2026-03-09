@@ -7,7 +7,7 @@ import streamlit as st
 from datetime import datetime, timedelta
 from database.crud_drivers import get_driver_by_id, get_driver_stats, update_driver, set_default_car, add_kauce_payment
 from database.crud_finance_records import create_record, get_records
-from utils.cached_queries import cached_cars as get_all_cars
+from utils.cached_queries import cached_cars as get_all_cars, cached_drivers as _cd, cached_pending_records as _cp, cached_monthly_summary as _cs
 from database.crud_calendar import get_week_assignments
 from database.crud_fines import get_driver_fines, create_fine, add_fine_payment, delete_fine
 
@@ -101,6 +101,9 @@ def render_driver_detail(driver_id: int):
                         kategorie='Jiné',
                         driver_id=driver.id,
                     )
+                    _cp.clear()
+                    _cs.clear()
+                _cd.clear()
                 st.session_state[f'confirm_ukoncit_{driver.id}'] = False
                 st.success("Řidič ukončen. Odpočet 60 dní pro vrácení kauce spuštěn.")
                 st.rerun()
@@ -144,6 +147,8 @@ def render_driver_detail(driver_id: int):
                             kategorie='Jiné',
                             driver_id=driver.id,
                         )
+                        _cp.clear()
+                        _cs.clear()
                         st.success("Záznam přidán do finančního kalendáře.")
                         st.rerun()
                 elif ma_zaznam:
@@ -190,6 +195,7 @@ def render_driver_detail(driver_id: int):
 
         if selected_car_label != current_car_label:
             set_default_car(driver.id, car_options[selected_car_label])
+            _cd.clear()
             st.success("Výchozí auto uloženo.")
             st.rerun()
 
@@ -219,6 +225,7 @@ def render_driver_detail(driver_id: int):
             castka = st.number_input("Splátka kauce (Kč)", min_value=0, value=1250, step=250)
             if st.form_submit_button("➕ Zadat splátku", width='stretch'):
                 add_kauce_payment(driver.id, castka)
+                _cd.clear()
                 st.success(f"Zaznamenáno {castka:,.0f} Kč")
                 st.rerun()
 
@@ -436,6 +443,7 @@ def render_driver_detail(driver_id: int):
                     nabor_ridicak=edit_nabor_ridicak,
                     nabor_taxi=edit_nabor_taxi,
                 )
+                _cd.clear()
                 st.success("Řidič aktualizován.")
                 st.rerun()
 

@@ -82,6 +82,7 @@ def _render_todo_widget():
             if save and new_text.strip():
                 create_todo(new_text.strip(), new_priority)
                 st.session_state['todo_show_form'] = False
+                cached_todos.clear()
                 st.rerun()
             if cancel:
                 st.session_state['todo_show_form'] = False
@@ -101,6 +102,7 @@ def _render_todo_widget():
                 checked = st.checkbox('Hotovo', value=False, key=f'todo_chk_{todo.id}', label_visibility='collapsed')
                 if checked:
                     set_todo_done(todo.id, True)
+                    cached_todos.clear()
                     st.rerun()
             with col_dot:
                 st.markdown(
@@ -115,6 +117,7 @@ def _render_todo_widget():
             with col_del:
                 if st.button('🗑️', key=f'todo_del_{todo.id}', help='Smazat'):
                     delete_todo(todo.id)
+                    cached_todos.clear()
                     st.rerun()
 
         # ── Hotové (sbalené) ─────────────────────────────────────────
@@ -126,6 +129,7 @@ def _render_todo_widget():
                         checked = st.checkbox('', value=True, key=f'todo_chk_{todo.id}', label_visibility='collapsed')
                         if not checked:
                             set_todo_done(todo.id, False)
+                            cached_todos.clear()
                             st.rerun()
                     with col_text:
                         st.markdown(
@@ -136,6 +140,7 @@ def _render_todo_widget():
                     with col_del:
                         if st.button('🗑️', key=f'todo_del_{todo.id}', help='Smazat'):
                             delete_todo(todo.id)
+                            cached_todos.clear()
                             st.rerun()
 
     st.markdown("<hr style='border-color:rgba(255,255,255,0.08); margin:0.8rem 0 1rem;'>", unsafe_allow_html=True)

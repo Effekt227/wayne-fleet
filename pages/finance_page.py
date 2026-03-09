@@ -12,7 +12,15 @@ from database.crud_finance_records import (
     mark_paid, mark_unpaid, delete_record,
     delete_recurring_from, get_monthly_summary,
 )
-from utils.cached_queries import cached_drivers as get_all_drivers, cached_cars as get_all_cars
+from utils.cached_queries import (
+    cached_drivers as get_all_drivers, cached_cars as get_all_cars,
+    cached_pending_records as _cp, cached_monthly_summary as _cs,
+)
+
+
+def _clear_fin():
+    _cp.clear()
+    _cs.clear()
 
 MESICE_CZ = [
     'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
@@ -271,11 +279,13 @@ def _render_day_records(records: list, all_drivers, all_cars):
             if r.status == 'nezaplaceno':
                 if st.button("✅", key=f"dp_pay_{r.id}", help="Označit jako zaplaceno", width='stretch'):
                     mark_paid(r.id)
+                    _clear_fin()
                     st.rerun()
         with col_act2:
             if r.status == 'zaplaceno':
                 if st.button("↩️", key=f"dp_unpay_{r.id}", help="Vrátit na nezaplaceno", width='stretch'):
                     mark_unpaid(r.id)
+                    _clear_fin()
                     st.rerun()
         with col_del:
             if st.button("🗑️", key=f"dp_del_{r.id}", help="Smazat"):
@@ -283,6 +293,7 @@ def _render_day_records(records: list, all_drivers, all_cars):
                     st.session_state[f'confirm_del_recurring_{r.id}'] = r
                 else:
                     delete_record(r.id)
+                    _clear_fin()
                     st.rerun()
 
         # Potvrzení smazání opakující se
@@ -299,10 +310,12 @@ def _render_day_records(records: list, all_drivers, all_cars):
                 if only_this:
                     delete_record(r.id)
                     del st.session_state[f'confirm_del_recurring_{r.id}']
+                    _clear_fin()
                     st.rerun()
                 if from_here:
                     delete_recurring_from(r.recurring_group_id, from_date=r.datum_splatnosti)
                     del st.session_state[f'confirm_del_recurring_{r.id}']
+                    _clear_fin()
                     st.rerun()
                 if cancel_del:
                     del st.session_state[f'confirm_del_recurring_{r.id}']
@@ -347,10 +360,12 @@ def _render_month_list(records: list, all_drivers, all_cars):
             if r.status == 'nezaplaceno':
                 if st.button("✅", key=f"ml_pay_{r.id}", help="Zaplaceno", width='stretch'):
                     mark_paid(r.id)
+                    _clear_fin()
                     st.rerun()
             else:
                 if st.button("↩️", key=f"ml_unpay_{r.id}", help="Vrátit", width='stretch'):
                     mark_unpaid(r.id)
+                    _clear_fin()
                     st.rerun()
 
         st.markdown("<hr style='margin:0.2rem 0; opacity:0.08;'>", unsafe_allow_html=True)
@@ -421,6 +436,7 @@ def _render_add_form(typ: str, all_drivers, all_cars):
                 )
                 st.session_state[key] = False
                 st.session_state['fin_selected_day'] = datum_splatnosti
+                _clear_fin()
                 st.success("Uloženo.")
                 st.rerun()
             else:
@@ -502,6 +518,7 @@ def _render_recurring_form(all_drivers, all_cars):
                 st.session_state['fin_rok'] = datum_od.year
                 st.session_state['fin_mesic'] = datum_od.month
                 st.session_state['fin_selected_day'] = datum_od
+                _clear_fin()
                 st.success(f"Vygenerováno {len(records)} opakujících se záznamů.")
                 st.rerun()
             else:

@@ -5,7 +5,7 @@ Podporuje: ranní/večerní 12h směny, celý den 24h, týdenní pronájem, serv
 
 import streamlit as st
 from datetime import datetime, timedelta
-from utils.cached_queries import cached_cars as get_all_cars
+from utils.cached_queries import cached_cars as get_all_cars, cached_week_assignments
 from database.crud_drivers import get_active_drivers
 from database.crud_calendar import (
     get_week_assignments,
@@ -54,7 +54,7 @@ def render_calendar_page():
     # Data
     all_cars = get_all_cars()
     active_drivers = get_active_drivers()
-    week_data = get_week_assignments(week_start)
+    week_data = cached_week_assignments(week_start)
 
     if not all_cars:
         st.info("Nejprve přidej auta na stránce Auta.")
@@ -106,6 +106,7 @@ def _render_car_block(car, week_start, week_end, car_data, driver_names, driver_
             clear_weekly_rental(car.id, week_start)
         else:
             set_weekly_rental(car.id, week_start, driver_map[selected_weekly])
+        cached_week_assignments.clear()
         st.rerun()
 
     # Pokud je týdenní pronájem aktivní, zobrazit banner a skrýt grid
@@ -170,6 +171,7 @@ def _render_morning_slot(car, day_date, ranni, cely_den, servis, driver_names, d
         )
         if chosen != '— Vybrat řidiče —':
             create_or_update_shift(car.id, day_date, 'cely_den', driver_map[chosen])
+            cached_week_assignments.clear()
             st.rerun()
         return
 
@@ -189,6 +191,7 @@ def _render_morning_slot(car, day_date, ranni, cely_den, servis, driver_names, d
                 clear_shift(car.id, day_date, 'cely_den')
             else:
                 create_or_update_shift(car.id, day_date, 'cely_den', driver_map[chosen])
+            cached_week_assignments.clear()
             st.rerun()
         return
 
@@ -196,6 +199,7 @@ def _render_morning_slot(car, day_date, ranni, cely_den, servis, driver_names, d
     if servis:
         if st.button("🔧 Servis", key=f"servis_morn_{car.id}_{day_date}", width='stretch'):
             clear_shift(car.id, day_date, 'servis')
+            cached_week_assignments.clear()
             st.rerun()
         return
 
@@ -230,6 +234,7 @@ def _render_morning_slot(car, day_date, ranni, cely_den, servis, driver_names, d
     else:
         create_or_update_shift(car.id, day_date, 'ranni', driver_map[selected])
 
+    cached_week_assignments.clear()
     st.rerun()
 
 
@@ -283,4 +288,5 @@ def _render_evening_slot(car, day_date, vecerni, cely_den, servis, driver_names,
     else:
         create_or_update_shift(car.id, day_date, 'vecerni', driver_map[selected])
 
+    cached_week_assignments.clear()
     st.rerun()

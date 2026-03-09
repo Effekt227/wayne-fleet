@@ -6,7 +6,7 @@ Detailní karta auta: finance, splátky, servisní historie, editace
 import streamlit as st
 from datetime import date, datetime
 from database.crud_cars import get_car_by_id, update_car
-from utils.cached_queries import cached_car_stats as get_car_stats
+from utils.cached_queries import cached_car_stats as get_car_stats, cached_cars as _cc, cached_next_service as _cns
 from database.crud_payments import zadat_platbu
 from database.crud_services import (
     get_car_services, create_service, delete_service,
@@ -116,6 +116,8 @@ def render_car_detail(car_id: int):
                     with col_ps:
                         if st.form_submit_button("💳 Zadat platbu", width='stretch'):
                             zadat_platbu(car.id, pocet)
+                            get_car_stats.clear()
+                            _cc.clear()
                             st.success(f"Platba {castka:,.0f} Kč zaznamenána.")
                             st.rerun()
             else:
@@ -173,6 +175,7 @@ def render_car_detail(car_id: int):
                     pristi_servis_km=s_pristi_km if s_pristi_km > 0 else None,
                     pristi_servis_popis=s_pristi_popis if s_pristi_popis else None,
                 )
+                _cns.clear()
                 st.session_state[f'show_add_service_{car.id}'] = False
                 st.success("Servis uložen.")
                 st.rerun()
@@ -202,6 +205,7 @@ def render_car_detail(car_id: int):
             with col_del:
                 if st.button("🗑️", key=f"del_service_{s.id}", help="Smazat"):
                     delete_service(s.id)
+                    _cns.clear()
                     st.rerun()
 
         st.markdown(
@@ -306,6 +310,8 @@ def render_car_detail(car_id: int):
                 update_data['stk_datum'] = edit_stk_datum
                 update_data['pojistka_datum'] = edit_pojistka_datum
                 update_car(car.id, **update_data)
+                _cc.clear()
+                get_car_stats.clear()
                 st.success("Auto aktualizováno.")
                 st.rerun()
 
