@@ -164,11 +164,12 @@ def parse_transaction(txn: dict) -> dict:
     currency = amount_obj.get('currency', 'CZK')
     credit_debit = txn.get('creditDebitIndication', '')  # CRDT / DBIT
 
-    booking_raw = txn.get('bookingDate', '')
+    booking_raw = (txn.get('bookingDate') or txn.get('valueDate')
+                   or txn.get('transactionDate') or '')
     try:
         booking_date = datetime.fromisoformat(booking_raw.replace('Z', '+00:00')).date()
     except Exception:
-        booking_date = None
+        booking_date = date.today()  # fallback na dnešek místo NULL
 
     # Protiúčet a zpráva (mohou být zanořené různě dle verze API)
     details = txn.get('entryDetails', {}).get('transactionDetails', {})

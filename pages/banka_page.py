@@ -228,7 +228,9 @@ def render_banka_page():
                     unmatch_transaction(txn.id)
                     st.rerun()
             else:
-                fr_keys = ['— spárovat s —'] + list(finance_open.keys())
+                search = st.text_input("", placeholder="🔍 Hledat...", key=f"search_{txn.id}", label_visibility='collapsed')
+                filtered = {k: v for k, v in finance_open.items() if search.lower() in k.lower()} if search else finance_open
+                fr_keys = ['— spárovat s —'] + list(filtered.keys())
                 sel = st.selectbox("", fr_keys, key=f"sel_{txn.id}", label_visibility='collapsed')
                 if sel != '— spárovat s —':
                     if st.button("✅ Párovat", key=f"match_{txn.id}", width="stretch"):
