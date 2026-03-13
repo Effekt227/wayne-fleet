@@ -115,8 +115,8 @@ def _render_todo_widget():
                 )
             with col_text:
                 st.markdown(
-                    f"<div style='padding-top:0.42rem; font-family:Rajdhani,sans-serif; font-size:0.95rem; "
-                    f"font-weight:600; color:white; letter-spacing:0.5px;'>{todo.text}</div>",
+                    f"<div style='padding-top:0.38rem; font-family:Rajdhani,sans-serif; font-size:1rem; "
+                    f"font-weight:600; color:white;'>{todo.text}</div>",
                     unsafe_allow_html=True,
                 )
             with col_del:
@@ -270,27 +270,27 @@ def render_dashboard():
                                      f"<span style='color:rgba(255,255,255,0.45);'> · {typ}</span>")
                     driver_line = "👤 " + " &nbsp;|&nbsp; ".join(parts)
                 else:
-                    driver_line = "<span style='color:rgba(255,255,255,0.3);'>Nikdo dnes nepracuje</span>"
+                    driver_line = "<span style='font-family:Rajdhani,sans-serif; color:rgba(255,255,255,0.35); font-size:0.9rem;'>Nikdo dnes nepracuje</span>"
 
                 # Finance / progress
                 if car.typ_vlastnictvi == 'vlastni':
                     procento = stats.get('procento_splaceno', 0)
                     bar_color = '#39ff14' if procento >= 100 else '#f5c518'
-                    bar_glow = 'rgba(57,255,20,0.8)' if procento >= 100 else 'rgba(245,197,24,0.8)'
+                    bar_glow = 'rgba(57,255,20,0.7)' if procento >= 100 else 'rgba(245,197,24,0.7)'
                     zaplaceno = stats.get('zaplaceno', 0)
                     celkova = stats.get('celkova_cena', 0)
                     finance_html = (
-                        f"<div style='font-family:Share Tech Mono,monospace; font-size:0.72rem; color:rgba(245,197,24,0.4); margin:4px 0 3px; letter-spacing:1px;'>"
-                        f"SPLACENO <span style='color:{bar_color}; text-shadow:0 0 6px {bar_glow};'>{procento:.0f}%</span>"
-                        f" &nbsp;·&nbsp; {zaplaceno:,.0f} / {celkova:,.0f} KČ</div>"
-                        f"<div style='background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.15); height:4px;'>"
+                        f"<div style='font-family:Rajdhani,sans-serif; font-size:0.88rem; font-weight:500; color:rgba(255,255,255,0.55); margin:5px 0 4px;'>"
+                        f"Splaceno <span style='color:{bar_color}; font-weight:700;'>{procento:.0f}%</span>"
+                        f" &nbsp;·&nbsp; {zaplaceno:,.0f} / {celkova:,.0f} Kč</div>"
+                        f"<div style='background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.12); height:4px; border-radius:1px;'>"
                         f"<div style='width:{min(procento,100):.0f}%; height:100%; "
-                        f"background:{bar_color}; box-shadow:0 0 8px {bar_glow};'></div></div>"
+                        f"background:{bar_color}; box-shadow:0 0 6px {bar_glow}; border-radius:1px;'></div></div>"
                     )
                 else:
                     finance_html = (
-                        f"<div style='font-family:Share Tech Mono,monospace; font-size:0.72rem; color:rgba(245,197,24,0.4); margin-top:4px; letter-spacing:1px;'>"
-                        f"PRONÁJEM · {car.splatka_tyden:,.0f} KČ/TÝDEN</div>"
+                        f"<div style='font-family:Rajdhani,sans-serif; font-size:0.88rem; font-weight:500; color:rgba(255,255,255,0.5); margin-top:5px;'>"
+                        f"Pronájem · <span style='color:#f5c518;'>{car.splatka_tyden:,.0f} Kč/týden</span></div>"
                     )
 
                 # Příští servis
@@ -302,38 +302,38 @@ def render_dashboard():
                 if next_svc.get('pristi_servis_datum'):
                     d = next_svc['pristi_servis_datum']
                     days_left = (d - today).days
-                    sc = '#ef4444' if days_left < 14 else '#f5c518' if days_left < 45 else 'rgba(245,197,24,0.35)'
+                    sc = '#ef4444' if days_left < 14 else '#f5c518' if days_left < 45 else 'rgba(255,255,255,0.4)'
                     svc_html = (
-                        f"<span style='font-family:Share Tech Mono,monospace; color:{sc}; font-size:0.7rem; letter-spacing:1px;'>"
-                        f"[SVC] {d.strftime('%d.%m.%Y')} · {days_left}D</span>"
+                        f"<span style='font-family:Rajdhani,sans-serif; color:{sc}; font-size:0.85rem; font-weight:600;'>"
+                        f"🔧 Servis {d.strftime('%d.%m.%Y')} · za {days_left} dní</span>"
                     )
                 elif next_svc.get('pristi_servis_km'):
                     svc_html = (
-                        f"<span style='font-family:Share Tech Mono,monospace; color:rgba(245,197,24,0.35); font-size:0.7rem; letter-spacing:1px;'>"
-                        f"[SVC] PŘI {next_svc['pristi_servis_km']:,} KM</span>"
+                        f"<span style='font-family:Rajdhani,sans-serif; color:rgba(255,255,255,0.4); font-size:0.85rem;'>"
+                        f"🔧 Servis při {next_svc['pristi_servis_km']:,} km</span>"
                     )
 
                 st.markdown(
-                    f"<div style='background:rgba(0,0,0,0.7); "
-                    f"border:1px solid rgba(245,197,24,0.2); "
+                    f"<div style='background:rgba(0,0,0,0.6); "
+                    f"border:1px solid rgba(245,197,24,0.18); "
                     f"border-left:3px solid {status_color}; "
-                    f"border-radius:0; padding:0.75rem 1rem; margin-bottom:0.45rem; position:relative;'>"
-                    f"<div style='position:absolute; top:0; right:0; width:8px; height:8px; background:{status_color}; box-shadow:0 0 6px {status_color};'></div>"
+                    f"border-radius:2px; padding:0.85rem 1rem; margin-bottom:0.5rem; position:relative;'>"
+                    f"<div style='position:absolute; top:0; right:0; width:7px; height:7px; background:{status_color}; box-shadow:0 0 5px {status_color};'></div>"
                     # Header řádek
                     f"<div style='display:flex; justify-content:space-between; align-items:center;'>"
                     f"<div>"
-                    f"<strong style='font-family:Orbitron,monospace; color:#f5c518; font-size:0.95rem; letter-spacing:2px;'>{car.spz}</strong>"
-                    f"<span style='font-family:Share Tech Mono,monospace; color:rgba(255,255,255,0.4); font-size:0.8rem; margin-left:0.5rem;'>"
+                    f"<strong style='font-family:Orbitron,monospace; color:#f5c518; font-size:1rem; letter-spacing:1.5px;'>{car.spz}</strong>"
+                    f"<span style='font-family:Rajdhani,sans-serif; color:rgba(255,255,255,0.65); font-size:0.95rem; margin-left:0.6rem; font-weight:500;'>"
                     f"{car.model} · {car.rok}</span>"
                     f"</div>"
-                    f"<span style='font-family:Share Tech Mono,monospace; font-size:0.75rem; color:rgba(245,197,24,0.4); letter-spacing:1px;'>{car.celkem_km:,} KM</span>"
+                    f"<span style='font-family:Rajdhani,sans-serif; font-size:0.9rem; font-weight:600; color:rgba(255,255,255,0.45);'>{car.celkem_km:,} km</span>"
                     f"</div>"
                     # Řidič
-                    f"<div style='margin-top:0.3rem; font-size:0.82rem; font-family:Share Tech Mono,monospace;'>{driver_line}</div>"
+                    f"<div style='margin-top:0.35rem; font-size:0.9rem; font-family:Rajdhani,sans-serif; font-weight:500;'>{driver_line}</div>"
                     # Finance
-                    f"<div style='margin-top:0.25rem;'>{finance_html}</div>"
+                    f"<div style='margin-top:0.3rem;'>{finance_html}</div>"
                     # Servis
-                    + (f"<div style='margin-top:0.25rem;'>{svc_html}</div>" if svc_html else "")
+                    + (f"<div style='margin-top:0.3rem;'>{svc_html}</div>" if svc_html else "")
                     + "</div>",
                     unsafe_allow_html=True,
                 )
@@ -367,21 +367,21 @@ def render_dashboard():
         if all_today:
             for car, s in all_today:
                 name = s.get('driver_name') or '?'
-                typ = {'ranni': 'RANNÍ', 'vecerni': 'VEČERNÍ',
-                       'cely_den': 'CELÝ DEN', 'servis': 'SERVIS',
-                       'tydenni': 'TÝDEN'}.get(s.get('typ', ''), s.get('typ', '').upper())
+                typ = {'ranni': 'Ranní', 'vecerni': 'Večerní',
+                       'cely_den': 'Celý den', 'servis': 'Servis',
+                       'tydenni': 'Celý týden'}.get(s.get('typ', ''), s.get('typ', ''))
                 st.markdown(
-                    f"<div style='background:rgba(245,197,24,0.04); border:1px solid rgba(245,197,24,0.2); "
-                    f"border-left:2px solid #f5c518; border-radius:0; "
-                    f"padding:0.45rem 0.8rem; margin-bottom:0.3rem;'>"
-                    f"<span style='font-family:Rajdhani,sans-serif; color:white; font-weight:700; font-size:0.95rem;'>{name}</span>"
-                    f"<span style='font-family:Share Tech Mono,monospace; color:rgba(245,197,24,0.5); font-size:0.72rem; margin-left:0.5rem; letter-spacing:1px;'>{typ} · {car.spz}</span>"
+                    f"<div style='background:rgba(245,197,24,0.04); border:1px solid rgba(245,197,24,0.18); "
+                    f"border-left:2px solid #f5c518; border-radius:2px; "
+                    f"padding:0.5rem 0.9rem; margin-bottom:0.35rem;'>"
+                    f"<span style='font-family:Rajdhani,sans-serif; color:white; font-weight:700; font-size:1rem;'>{name}</span>"
+                    f"<span style='font-family:Rajdhani,sans-serif; color:rgba(245,197,24,0.65); font-size:0.9rem; margin-left:0.6rem; font-weight:500;'>{typ} · {car.spz}</span>"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
         else:
             st.markdown(
-                "<span style='font-family:Share Tech Mono,monospace; color:rgba(245,197,24,0.3); font-size:0.8rem; letter-spacing:1px;'>-- ŽÁDNÉ SMĚNY --</span>",
+                "<span style='font-family:Rajdhani,sans-serif; color:rgba(255,255,255,0.35); font-size:0.95rem;'>Žádné směny dnes</span>",
                 unsafe_allow_html=True,
             )
 
@@ -404,71 +404,53 @@ def render_dashboard():
 
         anything = False
 
+        def _alert_row(popis, castka, badge, border_color, bg_color):
+            return (
+                f"<div style='font-family:Rajdhani,sans-serif; font-size:0.95rem; font-weight:500; "
+                f"padding:0.4rem 0.8rem; border-left:2px solid {border_color}; "
+                f"background:{bg_color}; margin-bottom:4px; border-radius:0 2px 2px 0;'>"
+                f"<span style='color:rgba(255,255,255,0.8);'>{popis}</span>"
+                f" <strong style='color:{border_color};'>{castka:,.0f} Kč</strong>"
+                f"<span style='color:rgba(255,255,255,0.35); font-size:0.82rem;'> {badge}</span>"
+                f"</div>"
+            )
+
         if overdue_vydane:
             anything = True
             st.markdown(
-                f"<div style='font-family:Share Tech Mono,monospace; color:#ef4444; font-size:0.72rem; "
-                f"letter-spacing:2px; margin-bottom:4px; text-shadow:0 0 6px rgba(239,68,68,0.5);'>"
-                f"▲ NEUHRAZENÉ PŘÍJMY [{len(overdue_vydane)}]</div>",
+                f"<div style='font-family:Rajdhani,sans-serif; color:#ef4444; font-size:0.9rem; "
+                f"font-weight:700; margin-bottom:5px;'>▲ Neuhrazené příjmy ({len(overdue_vydane)})</div>",
                 unsafe_allow_html=True,
             )
             for r in overdue_vydane[:4]:
                 days_ago = (today - r.datum_splatnosti).days
-                st.markdown(
-                    f"<div style='font-family:Share Tech Mono,monospace; font-size:0.75rem; "
-                    f"padding:0.25rem 0.6rem; border-left:2px solid #ef4444; "
-                    f"background:rgba(239,68,68,0.05); margin-bottom:3px;'>"
-                    f"<span style='color:rgba(255,255,255,0.6);'>{r.popis[:26]}</span>"
-                    f" <span style='color:#ef4444;'>{r.castka_kc:,.0f} KČ</span>"
-                    f"<span style='color:rgba(239,68,68,0.4); font-size:0.68rem;'> -{days_ago}D</span>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(_alert_row(r.popis[:28], r.castka_kc, f"před {days_ago} dny", '#ef4444', 'rgba(239,68,68,0.06)'), unsafe_allow_html=True)
 
         if overdue_prijate:
             anything = True
             st.markdown(
-                f"<div style='font-family:Share Tech Mono,monospace; color:#f5c518; font-size:0.72rem; "
-                f"letter-spacing:2px; margin:6px 0 4px; text-shadow:0 0 6px rgba(245,197,24,0.5);'>"
-                f"▲ NEZAPLACENÉ ZÁVAZKY [{len(overdue_prijate)}]</div>",
+                f"<div style='font-family:Rajdhani,sans-serif; color:#f5c518; font-size:0.9rem; "
+                f"font-weight:700; margin:8px 0 5px;'>▲ Nezaplacené závazky ({len(overdue_prijate)})</div>",
                 unsafe_allow_html=True,
             )
             for r in overdue_prijate[:4]:
                 days_ago = (today - r.datum_splatnosti).days
-                st.markdown(
-                    f"<div style='font-family:Share Tech Mono,monospace; font-size:0.75rem; "
-                    f"padding:0.25rem 0.6rem; border-left:2px solid #f5c518; "
-                    f"background:rgba(245,197,24,0.04); margin-bottom:3px;'>"
-                    f"<span style='color:rgba(255,255,255,0.6);'>{r.popis[:26]}</span>"
-                    f" <span style='color:#f5c518;'>{r.castka_kc:,.0f} KČ</span>"
-                    f"<span style='color:rgba(245,197,24,0.4); font-size:0.68rem;'> -{days_ago}D</span>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(_alert_row(r.popis[:28], r.castka_kc, f"před {days_ago} dny", '#f5c518', 'rgba(245,197,24,0.04)'), unsafe_allow_html=True)
 
         if upcoming_prijate:
             anything = True
             st.markdown(
-                f"<div style='font-family:Share Tech Mono,monospace; color:rgba(245,197,24,0.6); font-size:0.72rem; "
-                f"letter-spacing:2px; margin:6px 0 4px;'>◈ SPLATNÉ TENTO TÝDEN [{len(upcoming_prijate)}]</div>",
+                f"<div style='font-family:Rajdhani,sans-serif; color:rgba(245,197,24,0.75); font-size:0.9rem; "
+                f"font-weight:700; margin:8px 0 5px;'>◈ Splatné tento týden ({len(upcoming_prijate)})</div>",
                 unsafe_allow_html=True,
             )
             for r in upcoming_prijate[:4]:
-                st.markdown(
-                    f"<div style='font-family:Share Tech Mono,monospace; font-size:0.75rem; "
-                    f"padding:0.25rem 0.6rem; border-left:1px solid rgba(245,197,24,0.4); "
-                    f"background:rgba(245,197,24,0.02); margin-bottom:3px;'>"
-                    f"<span style='color:rgba(255,255,255,0.55);'>{r.popis[:26]}</span>"
-                    f" <span style='color:rgba(245,197,24,0.7);'>{r.castka_kc:,.0f} KČ</span>"
-                    f"<span style='color:rgba(245,197,24,0.3); font-size:0.68rem;'> DO {r.datum_splatnosti.strftime('%d.%m')}</span>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(_alert_row(r.popis[:28], r.castka_kc, f"do {r.datum_splatnosti.strftime('%d.%m')}", 'rgba(245,197,24,0.5)', 'rgba(245,197,24,0.02)'), unsafe_allow_html=True)
 
         if not anything:
             st.markdown(
-                "<div style='font-family:Share Tech Mono,monospace; color:#39ff14; font-size:0.8rem; "
-                "letter-spacing:2px; text-shadow:0 0 8px rgba(57,255,20,0.5);'>✓ SYS OK — ŽÁDNÁ UPOZORNĚNÍ</div>",
+                "<div style='font-family:Rajdhani,sans-serif; color:#39ff14; font-size:1rem; "
+                "font-weight:600;'>✓ Žádná upozornění</div>",
                 unsafe_allow_html=True,
             )
 
@@ -488,35 +470,34 @@ def render_dashboard():
                 procento = min(100, kauce_z / kauce_c * 100) if kauce_c else 0
                 zbyvajici = kauce_c - kauce_z
                 bar_color = '#39ff14' if procento >= 100 else '#f5c518'
-                bar_glow = 'rgba(57,255,20,0.7)' if procento >= 100 else 'rgba(245,197,24,0.7)'
+                bar_glow = 'rgba(57,255,20,0.6)' if procento >= 100 else 'rgba(245,197,24,0.6)'
                 initials = ''.join(n[0].upper() for n in driver.jmeno.split() if n)
 
                 st.markdown(
-                    f"<div style='display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem; "
-                    f"padding:0.35rem 0.5rem; border-left:2px solid rgba(245,197,24,0.3); "
-                    f"background:rgba(245,197,24,0.02);'>"
-                    f"<div style='width:24px; height:24px; flex-shrink:0; "
-                    f"border:1px solid #f5c518; "
+                    f"<div style='display:flex; align-items:center; gap:0.7rem; margin-bottom:0.45rem; "
+                    f"padding:0.45rem 0.7rem; border-left:2px solid rgba(245,197,24,0.3); "
+                    f"background:rgba(245,197,24,0.02); border-radius:0 2px 2px 0;'>"
+                    f"<div style='width:28px; height:28px; flex-shrink:0; "
+                    f"border:1px solid rgba(245,197,24,0.5); "
                     f"display:flex; align-items:center; justify-content:center; "
-                    f"font-family:Orbitron,monospace; font-size:0.55rem; font-weight:700; "
-                    f"color:#f5c518; text-shadow:0 0 6px rgba(245,197,24,0.7);'>{initials}</div>"
+                    f"font-family:Orbitron,monospace; font-size:0.6rem; font-weight:700; "
+                    f"color:#f5c518;'>{initials}</div>"
                     f"<div style='flex:1; min-width:0;'>"
-                    f"<div style='display:flex; justify-content:space-between; "
-                    f"font-family:Rajdhani,sans-serif; font-size:0.85rem; font-weight:600; color:rgba(255,255,255,0.8);'>"
-                    f"<span>{driver.jmeno}</span>"
-                    f"<span style='font-family:Share Tech Mono,monospace; font-size:0.72rem; color:{bar_color}; text-shadow:0 0 5px {bar_glow};'>{procento:.0f}%</span></div>"
-                    f"<div style='background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.1); height:3px; margin-top:3px;'>"
-                    f"<div style='width:{procento:.0f}%; height:100%; background:{bar_color}; box-shadow:0 0 6px {bar_glow};'></div>"
+                    f"<div style='display:flex; justify-content:space-between; align-items:baseline;'>"
+                    f"<span style='font-family:Rajdhani,sans-serif; font-size:1rem; font-weight:700; color:rgba(255,255,255,0.85);'>{driver.jmeno}</span>"
+                    f"<span style='font-family:Rajdhani,sans-serif; font-size:0.9rem; font-weight:700; color:{bar_color};'>{procento:.0f}%</span></div>"
+                    f"<div style='background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.1); height:4px; margin-top:4px; border-radius:1px;'>"
+                    f"<div style='width:{procento:.0f}%; height:100%; background:{bar_color}; box-shadow:0 0 5px {bar_glow}; border-radius:1px;'></div>"
                     f"</div>"
-                    f"<div style='font-family:Share Tech Mono,monospace; font-size:0.65rem; color:rgba(245,197,24,0.35); letter-spacing:1px; margin-top:1px;'>"
-                    f"ZBÝ {zbyvajici:,.0f} KČ</div>"
+                    f"<div style='font-family:Rajdhani,sans-serif; font-size:0.82rem; color:rgba(255,255,255,0.4); margin-top:2px;'>"
+                    f"Zbývá {zbyvajici:,.0f} Kč</div>"
                     f"</div>"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
         else:
             st.markdown(
-                "<span style='font-family:Share Tech Mono,monospace; color:rgba(245,197,24,0.3); font-size:0.75rem; letter-spacing:1px;'>-- ŽÁDNÉ ZÁZNAMY --</span>",
+                "<span style='font-family:Rajdhani,sans-serif; color:rgba(255,255,255,0.3); font-size:0.95rem;'>Žádní aktivní řidiči s kaucí</span>",
                 unsafe_allow_html=True,
             )
 

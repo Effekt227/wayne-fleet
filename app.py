@@ -107,26 +107,26 @@ st.markdown("""
     /* === LOGO === */
     .logo {
         font-family: 'Orbitron', monospace !important;
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 900;
         color: #f5c518 !important;
         text-shadow: 0 0 10px rgba(245,197,24,0.8), 0 0 30px rgba(245,197,24,0.4);
-        letter-spacing: 4px;
+        letter-spacing: 3px;
         -webkit-text-fill-color: #f5c518 !important;
     }
 
     /* === STAT KARTY – tech styl === */
     .stat-card {
         background: rgba(0,0,0,0.6);
-        border: 1px solid rgba(245,197,24,0.4);
+        border: 1px solid rgba(245,197,24,0.35);
         border-radius: 2px;
-        padding: 1.5rem;
+        padding: 1.2rem 1rem;
         text-align: center;
         transition: all 0.2s ease;
         height: 100%;
         position: relative;
-        clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-        box-shadow: inset 0 0 20px rgba(245,197,24,0.05), 0 0 15px rgba(245,197,24,0.1);
+        clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        box-shadow: inset 0 0 20px rgba(245,197,24,0.04), 0 0 12px rgba(245,197,24,0.08);
     }
     .stat-card::before {
         content: '';
@@ -139,33 +139,33 @@ st.markdown("""
         content: '';
         position: absolute;
         top: 4px; right: 4px;
-        width: 6px; height: 6px;
+        width: 5px; height: 5px;
         background: #f5c518;
-        box-shadow: 0 0 8px #f5c518;
+        box-shadow: 0 0 6px #f5c518;
     }
     .stat-card:hover {
-        border-color: rgba(245,197,24,0.8);
-        box-shadow: 0 0 25px rgba(245,197,24,0.25), inset 0 0 30px rgba(245,197,24,0.08);
+        border-color: rgba(245,197,24,0.7);
+        box-shadow: 0 0 20px rgba(245,197,24,0.2), inset 0 0 25px rgba(245,197,24,0.06);
         transform: translateY(-2px);
     }
-    .stat-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .stat-icon { font-size: 1.6rem; margin-bottom: 0.3rem; }
     .stat-value {
         font-family: 'Orbitron', monospace !important;
-        font-size: 2.2rem;
+        font-size: 1.8rem;
         font-weight: 700;
         color: #f5c518 !important;
-        text-shadow: 0 0 15px rgba(245,197,24,0.6);
-        margin: 0.5rem 0;
+        text-shadow: 0 0 12px rgba(245,197,24,0.5);
+        margin: 0.3rem 0;
     }
     .stat-label {
-        font-family: 'Share Tech Mono', monospace;
-        color: rgba(245,197,24,0.6);
-        font-size: 0.75rem;
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255,255,255,0.55);
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 3px;
-        font-weight: 400;
+        letter-spacing: 1.5px;
+        font-weight: 600;
     }
-    .stat-change { color: #39ff14; font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; font-family: 'Share Tech Mono', monospace; }
+    .stat-change { color: #39ff14; font-size: 0.85rem; font-weight: 600; margin-top: 0.3rem; font-family: 'Rajdhani', sans-serif; }
 
     /* === PREMIUM CARD === */
     .premium-card {
@@ -221,11 +221,11 @@ st.markdown("""
     }
     .car-spz {
         font-family: 'Orbitron', monospace !important;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         font-weight: 700;
         color: #f5c518 !important;
-        text-shadow: 0 0 12px rgba(245,197,24,0.5);
-        letter-spacing: 3px;
+        text-shadow: 0 0 10px rgba(245,197,24,0.4);
+        letter-spacing: 2px;
     }
 
     /* === STATUS BADGES === */
@@ -346,36 +346,35 @@ st.markdown("""
     }
     .driver-name {
         font-family: 'Rajdhani', sans-serif;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: white;
-        margin-bottom: 0.3rem;
-        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+        letter-spacing: 0.5px;
     }
     .driver-meta {
-        font-family: 'Share Tech Mono', monospace;
-        color: rgba(245,197,24,0.5);
-        font-size: 0.8rem;
-        line-height: 1.6;
+        font-family: 'Rajdhani', sans-serif;
+        color: rgba(255,255,255,0.6);
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 
     /* === HEADINGS === */
     h1, h2, h3 {
         font-family: 'Rajdhani', sans-serif !important;
         color: white !important;
-        letter-spacing: 2px;
-        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     h2::after {
         content: '';
         display: block;
-        width: 60px;
+        width: 50px;
         height: 2px;
         background: #f5c518;
-        box-shadow: 0 0 8px #f5c518;
-        margin-top: 4px;
+        box-shadow: 0 0 6px #f5c518;
+        margin-top: 3px;
     }
-    p, div, span { color: rgba(255,255,255,0.8); }
+    p, div, span { color: rgba(255,255,255,0.85); }
 
     /* === BUTTONS === */
     .stButton > button,
@@ -383,59 +382,59 @@ st.markdown("""
     button[kind="primary"] {
         background: transparent !important;
         color: #f5c518 !important;
-        border: 1px solid rgba(245,197,24,0.6) !important;
-        border-radius: 0 !important;
-        font-family: 'Share Tech Mono', monospace !important;
-        font-weight: 400 !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 2px !important;
+        border: 1px solid rgba(245,197,24,0.5) !important;
+        border-radius: 2px !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 1px !important;
         text-transform: uppercase !important;
         transition: all 0.15s ease !important;
-        clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%) !important;
-        box-shadow: 0 0 8px rgba(245,197,24,0.1) !important;
+        box-shadow: 0 0 6px rgba(245,197,24,0.08) !important;
     }
     .stButton > button:hover {
         background: rgba(245,197,24,0.1) !important;
         border-color: #f5c518 !important;
-        box-shadow: 0 0 20px rgba(245,197,24,0.3), inset 0 0 20px rgba(245,197,24,0.05) !important;
+        box-shadow: 0 0 15px rgba(245,197,24,0.25) !important;
         color: #ffd700 !important;
-        text-shadow: 0 0 8px rgba(245,197,24,0.8) !important;
     }
     .stButton > button:active {
-        background: rgba(245,197,24,0.2) !important;
+        background: rgba(245,197,24,0.15) !important;
     }
 
     /* Aktivní stránka v menu (type=primary) */
     .stButton > button[kind="primary"] {
-        background: rgba(245,197,24,0.15) !important;
+        background: rgba(245,197,24,0.12) !important;
         border-color: #f5c518 !important;
         color: #f5c518 !important;
-        text-shadow: 0 0 8px rgba(245,197,24,0.7) !important;
-        box-shadow: 0 0 15px rgba(245,197,24,0.2), inset 0 0 15px rgba(245,197,24,0.05) !important;
+        text-shadow: 0 0 6px rgba(245,197,24,0.5) !important;
+        box-shadow: 0 0 12px rgba(245,197,24,0.15) !important;
     }
 
     /* === METRIKY === */
     [data-testid="stMetricValue"] {
         font-family: 'Orbitron', monospace !important;
         color: #f5c518 !important;
-        font-size: 1.6rem !important;
-        text-shadow: 0 0 10px rgba(245,197,24,0.5);
+        font-size: 1.7rem !important;
+        text-shadow: 0 0 8px rgba(245,197,24,0.4);
     }
     [data-testid="stMetricLabel"] {
-        font-family: 'Share Tech Mono', monospace !important;
-        color: rgba(245,197,24,0.5) !important;
-        font-size: 0.75rem !important;
-        letter-spacing: 2px !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        color: rgba(255,255,255,0.65) !important;
+        font-size: 0.9rem !important;
+        letter-spacing: 0.5px !important;
+        font-weight: 600 !important;
         text-transform: uppercase !important;
     }
     [data-testid="stMetricDelta"] {
-        font-family: 'Share Tech Mono', monospace !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-size: 0.9rem !important;
     }
     [data-testid="stMetric"] {
         background: rgba(245,197,24,0.03) !important;
-        border: 1px solid rgba(245,197,24,0.15) !important;
+        border: 1px solid rgba(245,197,24,0.12) !important;
         border-left: 2px solid #f5c518 !important;
-        padding: 0.8rem !important;
+        padding: 0.8rem 1rem !important;
     }
 
     /* === INPUT FIELDS === */
@@ -443,11 +442,13 @@ st.markdown("""
     [data-testid="stNumberInput"] input,
     [data-testid="stSelectbox"] select,
     textarea {
-        background: #0a0a0a !important;
+        background: #0d0d0d !important;
         border: 1px solid rgba(245,197,24,0.3) !important;
-        border-radius: 0 !important;
-        color: #f5c518 !important;
-        font-family: 'Share Tech Mono', monospace !important;
+        border-radius: 2px !important;
+        color: #ffffff !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-size: 1rem !important;
+        font-weight: 500 !important;
     }
     [data-testid="stTextInput"] input:focus,
     [data-testid="stNumberInput"] input:focus {
@@ -458,34 +459,36 @@ st.markdown("""
     /* === TABS === */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
         background: transparent;
-        border-bottom: 1px solid rgba(245,197,24,0.3);
+        border-bottom: 1px solid rgba(245,197,24,0.25);
         gap: 0;
     }
     [data-testid="stTabs"] [data-baseweb="tab"] {
-        font-family: 'Share Tech Mono', monospace !important;
-        font-size: 0.8rem !important;
-        letter-spacing: 2px !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
         text-transform: uppercase !important;
-        color: rgba(245,197,24,0.4) !important;
+        color: rgba(255,255,255,0.45) !important;
         border-radius: 0 !important;
-        padding: 0.6rem 1.2rem !important;
+        padding: 0.6rem 1.4rem !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
         color: #f5c518 !important;
-        background: rgba(245,197,24,0.08) !important;
+        background: rgba(245,197,24,0.06) !important;
         border-bottom: 2px solid #f5c518 !important;
-        text-shadow: 0 0 8px rgba(245,197,24,0.5) !important;
     }
 
     /* === EXPANDER === */
     [data-testid="stExpander"] {
         border: 1px solid rgba(245,197,24,0.2) !important;
-        border-radius: 0 !important;
-        background: rgba(0,0,0,0.4) !important;
+        border-radius: 2px !important;
+        background: rgba(0,0,0,0.3) !important;
     }
     [data-testid="stExpander"] summary {
-        font-family: 'Share Tech Mono', monospace !important;
-        letter-spacing: 1px !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        color: rgba(255,255,255,0.8) !important;
     }
 
     /* === SELECT / RADIO === */
@@ -498,10 +501,10 @@ st.markdown("""
     /* === TOGGLE / CHECKBOX === */
     [data-testid="stCheckbox"] label,
     [data-testid="stToggle"] label {
-        font-family: 'Share Tech Mono', monospace !important;
-        font-size: 0.85rem !important;
-        letter-spacing: 1px !important;
-        color: rgba(245,197,24,0.7) !important;
+        font-family: 'Rajdhani', sans-serif !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        color: rgba(255,255,255,0.8) !important;
     }
 
     /* === ALERTS & INFO === */
