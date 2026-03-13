@@ -60,9 +60,11 @@ if 'edit_shift_id' not in st.session_state:
 if 'payment_car_id' not in st.session_state:
     st.session_state['payment_car_id'] = None
 
-# Ultra Premium CSS (same as before)
+# HI-TECH CSS
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -74,193 +76,481 @@ st.markdown("""
         max-width: 100%;
     }
 
-    /* Pozadí – černé */
+    /* === POZADÍ s tech gridem === */
     .stApp, [data-testid="stAppViewContainer"] {
-        background: #0a0a0a !important;
+        background: #050505 !important;
+        background-image:
+            linear-gradient(rgba(245,197,24,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(245,197,24,0.03) 1px, transparent 1px) !important;
+        background-size: 40px 40px !important;
     }
     [data-testid="stHeader"] {
         background: transparent !important;
     }
 
-    /* Logo */
-    .logo {
-        font-size: 2rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #f5c518 0%, #d4a017 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -1px;
+    /* Scanline overlay */
+    .stApp::after {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.08) 2px,
+            rgba(0,0,0,0.08) 4px
+        );
+        pointer-events: none;
+        z-index: 9999;
     }
 
-    /* Karty */
+    /* === LOGO === */
+    .logo {
+        font-family: 'Orbitron', monospace !important;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: #f5c518 !important;
+        text-shadow: 0 0 10px rgba(245,197,24,0.8), 0 0 30px rgba(245,197,24,0.4);
+        letter-spacing: 4px;
+        -webkit-text-fill-color: #f5c518 !important;
+    }
+
+    /* === STAT KARTY – tech styl === */
     .stat-card {
-        background: rgba(245,197,24,0.08);
-        border: 1px solid rgba(245,197,24,0.25);
-        border-radius: 20px;
-        padding: 2rem;
+        background: rgba(0,0,0,0.6);
+        border: 1px solid rgba(245,197,24,0.4);
+        border-radius: 2px;
+        padding: 1.5rem;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         height: 100%;
+        position: relative;
+        clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+        box-shadow: inset 0 0 20px rgba(245,197,24,0.05), 0 0 15px rgba(245,197,24,0.1);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #f5c518, transparent);
+    }
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 4px; right: 4px;
+        width: 6px; height: 6px;
+        background: #f5c518;
+        box-shadow: 0 0 8px #f5c518;
     }
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(245,197,24,0.2);
+        border-color: rgba(245,197,24,0.8);
+        box-shadow: 0 0 25px rgba(245,197,24,0.25), inset 0 0 30px rgba(245,197,24,0.08);
+        transform: translateY(-2px);
     }
-    .stat-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .stat-icon { font-size: 2rem; margin-bottom: 0.5rem; }
     .stat-value {
-        font-size: 3rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #f5c518 0%, #d4a017 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-family: 'Orbitron', monospace !important;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #f5c518 !important;
+        text-shadow: 0 0 15px rgba(245,197,24,0.6);
         margin: 0.5rem 0;
     }
     .stat-label {
-        color: rgba(255,255,255,0.6);
-        font-size: 0.9rem;
+        font-family: 'Share Tech Mono', monospace;
+        color: rgba(245,197,24,0.6);
+        font-size: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 600;
+        letter-spacing: 3px;
+        font-weight: 400;
     }
-    .stat-change { color: #10b981; font-size: 0.9rem; font-weight: 600; margin-top: 0.5rem; }
+    .stat-change { color: #39ff14; font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; font-family: 'Share Tech Mono', monospace; }
 
+    /* === PREMIUM CARD === */
     .premium-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(245,197,24,0.15);
-        border-radius: 20px;
-        padding: 2rem;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(245,197,24,0.2);
+        border-radius: 0;
+        padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        position: relative;
+        clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+        box-shadow: 0 0 20px rgba(245,197,24,0.05);
+    }
+    .premium-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 40px; height: 2px;
+        background: #f5c518;
+        box-shadow: 0 0 8px #f5c518;
+    }
+    .premium-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 2px; height: 40px;
+        background: #f5c518;
+        box-shadow: 0 0 8px #f5c518;
     }
 
+    /* === CAR CARD === */
     .car-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px;
-        padding: 2rem;
+        background: rgba(5,5,5,0.8);
+        border: 1px solid rgba(245,197,24,0.3);
+        border-radius: 0;
+        padding: 1.5rem;
         margin: 1rem 0;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
     }
     .car-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(245,197,24,0.15);
+        border-color: rgba(245,197,24,0.7);
+        box-shadow: 0 0 30px rgba(245,197,24,0.2), inset 0 0 40px rgba(245,197,24,0.04);
     }
     .car-card::before {
         content: '';
         position: absolute;
         top: 0; left: 0;
-        width: 100%; height: 4px;
-        background: linear-gradient(90deg, #f5c518 0%, #d4a017 100%);
+        width: 100%; height: 2px;
+        background: linear-gradient(90deg, #f5c518 0%, rgba(245,197,24,0.3) 60%, transparent 100%);
+        box-shadow: 0 0 10px rgba(245,197,24,0.5);
     }
-    .car-spz { font-size: 1.8rem; font-weight: 800; color: white; }
+    .car-spz {
+        font-family: 'Orbitron', monospace !important;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #f5c518 !important;
+        text-shadow: 0 0 12px rgba(245,197,24,0.5);
+        letter-spacing: 3px;
+    }
 
+    /* === STATUS BADGES === */
     .status-active {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white; padding: 0.5rem 1rem; border-radius: 20px;
-        font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+        background: transparent;
+        border: 1px solid #39ff14;
+        color: #39ff14;
+        padding: 0.3rem 0.8rem;
+        border-radius: 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 8px #39ff14;
+        box-shadow: 0 0 8px rgba(57,255,20,0.2), inset 0 0 8px rgba(57,255,20,0.05);
     }
     .status-service {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white; padding: 0.5rem 1rem; border-radius: 20px;
-        font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+        background: transparent;
+        border: 1px solid #f5c518;
+        color: #f5c518;
+        padding: 0.3rem 0.8rem;
+        border-radius: 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.75rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 0 8px #f5c518;
+        box-shadow: 0 0 8px rgba(245,197,24,0.2);
     }
 
+    /* === INFO BOX === */
     .info-box {
-        background: rgba(255,255,255,0.03);
-        padding: 1rem; border-radius: 8px;
-        border: 1px solid rgba(245,197,24,0.1);
+        background: rgba(245,197,24,0.03);
+        padding: 0.8rem;
+        border-radius: 0;
+        border-left: 2px solid rgba(245,197,24,0.5);
+        border-bottom: 1px solid rgba(245,197,24,0.15);
     }
     .info-label {
-        color: rgba(255,255,255,0.5); font-size: 0.75rem;
-        text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;
+        font-family: 'Share Tech Mono', monospace;
+        color: rgba(245,197,24,0.5);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 0.3rem;
     }
-    .info-value { color: white; font-size: 1.3rem; font-weight: 700; }
-    .info-value.success { color: #10b981; }
-    .info-value.warning { color: #f5c518; }
+    .info-value {
+        font-family: 'Orbitron', monospace;
+        color: #f0f0f0;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+    .info-value.success { color: #39ff14; text-shadow: 0 0 8px rgba(57,255,20,0.5); }
+    .info-value.warning { color: #f5c518; text-shadow: 0 0 8px rgba(245,197,24,0.5); }
 
+    /* === PROGRESS BAR === */
     .progress-bar {
-        background: rgba(255,255,255,0.1);
-        border-radius: 10px; height: 8px; overflow: hidden; margin: 0.5rem 0;
+        background: rgba(245,197,24,0.08);
+        border: 1px solid rgba(245,197,24,0.2);
+        border-radius: 0;
+        height: 6px;
+        overflow: hidden;
+        margin: 0.5rem 0;
     }
     .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #f5c518 0%, #d4a017 100%);
-        border-radius: 10px; transition: width 0.3s ease;
+        background: linear-gradient(90deg, #f5c518 0%, #ffd700 100%);
+        box-shadow: 0 0 10px rgba(245,197,24,0.8);
+        border-radius: 0;
+        transition: width 0.5s ease;
     }
 
+    /* === DRIVER CARD === */
     .driver-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 16px; padding: 2rem; margin: 1rem 0;
-        display: flex; align-items: center; gap: 2rem; transition: all 0.3s ease;
+        background: rgba(5,5,5,0.8);
+        border: 1px solid rgba(245,197,24,0.25);
+        border-radius: 0;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: all 0.2s ease;
+        clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+        position: relative;
     }
     .driver-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 30px rgba(245,197,24,0.15);
+        border-color: rgba(245,197,24,0.6);
+        box-shadow: 0 0 20px rgba(245,197,24,0.15);
+    }
+    .driver-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 60px; height: 2px;
+        background: #f5c518;
+        box-shadow: 0 0 8px rgba(245,197,24,0.6);
     }
     .driver-avatar {
-        width: 80px; height: 80px; border-radius: 50%;
-        background: linear-gradient(135deg, #f5c518 0%, #d4a017 100%);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 2rem; font-weight: 900; color: #0a0a0a;
+        width: 70px;
+        height: 70px;
+        border-radius: 0;
+        background: rgba(245,197,24,0.1);
+        border: 2px solid #f5c518;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #f5c518;
+        text-shadow: 0 0 10px rgba(245,197,24,0.8);
+        box-shadow: 0 0 15px rgba(245,197,24,0.2), inset 0 0 15px rgba(245,197,24,0.05);
+        clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+        flex-shrink: 0;
     }
-    .driver-name { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
-    .driver-meta { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+    .driver-name {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.3rem;
+        letter-spacing: 1px;
+    }
+    .driver-meta {
+        font-family: 'Share Tech Mono', monospace;
+        color: rgba(245,197,24,0.5);
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }
 
-    h1, h2, h3 { color: white !important; }
+    /* === HEADINGS === */
+    h1, h2, h3 {
+        font-family: 'Rajdhani', sans-serif !important;
+        color: white !important;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    h2::after {
+        content: '';
+        display: block;
+        width: 60px;
+        height: 2px;
+        background: #f5c518;
+        box-shadow: 0 0 8px #f5c518;
+        margin-top: 4px;
+    }
     p, div, span { color: rgba(255,255,255,0.8); }
 
-    /* Tlačítka – žlutá */
+    /* === BUTTONS === */
     .stButton > button,
     button[kind="secondary"],
     button[kind="primary"] {
-        background: linear-gradient(135deg, #f5c518 0%, #d4a017 100%) !important;
-        color: #0a0a0a !important;
-        border: none !important;
-        border-radius: 10px !important;
-        font-weight: 700 !important;
-        transition: all 0.2s ease !important;
+        background: transparent !important;
+        color: #f5c518 !important;
+        border: 1px solid rgba(245,197,24,0.6) !important;
+        border-radius: 0 !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        font-weight: 400 !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+        transition: all 0.15s ease !important;
+        clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%) !important;
+        box-shadow: 0 0 8px rgba(245,197,24,0.1) !important;
     }
     .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(245,197,24,0.4) !important;
-        background: linear-gradient(135deg, #ffd700 0%, #f5c518 100%) !important;
+        background: rgba(245,197,24,0.1) !important;
+        border-color: #f5c518 !important;
+        box-shadow: 0 0 20px rgba(245,197,24,0.3), inset 0 0 20px rgba(245,197,24,0.05) !important;
+        color: #ffd700 !important;
+        text-shadow: 0 0 8px rgba(245,197,24,0.8) !important;
     }
     .stButton > button:active {
-        transform: translateY(0) !important;
+        background: rgba(245,197,24,0.2) !important;
     }
 
-    /* Metriky */
-    [data-testid="stMetricValue"] { color: white; font-size: 2rem; }
-    [data-testid="stMetricLabel"] { color: rgba(255,255,255,0.6); }
+    /* === METRIKY === */
+    [data-testid="stMetricValue"] {
+        font-family: 'Orbitron', monospace !important;
+        color: #f5c518 !important;
+        font-size: 1.6rem !important;
+        text-shadow: 0 0 10px rgba(245,197,24,0.5);
+    }
+    [data-testid="stMetricLabel"] {
+        font-family: 'Share Tech Mono', monospace !important;
+        color: rgba(245,197,24,0.5) !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-family: 'Share Tech Mono', monospace !important;
+    }
+    [data-testid="stMetric"] {
+        background: rgba(245,197,24,0.03) !important;
+        border: 1px solid rgba(245,197,24,0.15) !important;
+        border-left: 2px solid #f5c518 !important;
+        padding: 0.8rem !important;
+    }
 
-    /* Input fields */
+    /* === INPUT FIELDS === */
     [data-testid="stTextInput"] input,
     [data-testid="stNumberInput"] input,
     [data-testid="stSelectbox"] select,
     textarea {
-        background: #1a1a1a !important;
-        border-color: rgba(245,197,24,0.3) !important;
-        color: white !important;
+        background: #0a0a0a !important;
+        border: 1px solid rgba(245,197,24,0.3) !important;
+        border-radius: 0 !important;
+        color: #f5c518 !important;
+        font-family: 'Share Tech Mono', monospace !important;
+    }
+    [data-testid="stTextInput"] input:focus,
+    [data-testid="stNumberInput"] input:focus {
+        border-color: #f5c518 !important;
+        box-shadow: 0 0 12px rgba(245,197,24,0.3) !important;
     }
 
-    /* Tabs */
+    /* === TABS === */
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        background: #111111;
-        border-bottom: 2px solid rgba(245,197,24,0.2);
+        background: transparent;
+        border-bottom: 1px solid rgba(245,197,24,0.3);
+        gap: 0;
+    }
+    [data-testid="stTabs"] [data-baseweb="tab"] {
+        font-family: 'Share Tech Mono', monospace !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase !important;
+        color: rgba(245,197,24,0.4) !important;
+        border-radius: 0 !important;
+        padding: 0.6rem 1.2rem !important;
     }
     [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
         color: #f5c518 !important;
-        border-bottom-color: #f5c518 !important;
+        background: rgba(245,197,24,0.08) !important;
+        border-bottom: 2px solid #f5c518 !important;
+        text-shadow: 0 0 8px rgba(245,197,24,0.5) !important;
     }
 
-    /* Expander */
+    /* === EXPANDER === */
     [data-testid="stExpander"] {
-        border-color: rgba(245,197,24,0.2) !important;
-        background: rgba(255,255,255,0.02) !important;
+        border: 1px solid rgba(245,197,24,0.2) !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.4) !important;
     }
+    [data-testid="stExpander"] summary {
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 1px !important;
+    }
+
+    /* === SELECT / RADIO === */
+    [data-baseweb="select"] [data-baseweb="select-container"] {
+        background: #0a0a0a !important;
+        border: 1px solid rgba(245,197,24,0.3) !important;
+        border-radius: 0 !important;
+    }
+
+    /* === TOGGLE / CHECKBOX === */
+    [data-testid="stCheckbox"] label,
+    [data-testid="stToggle"] label {
+        font-family: 'Share Tech Mono', monospace !important;
+        font-size: 0.85rem !important;
+        letter-spacing: 1px !important;
+        color: rgba(245,197,24,0.7) !important;
+    }
+
+    /* === ALERTS & INFO === */
+    [data-testid="stAlert"] {
+        border-radius: 0 !important;
+        border-left: 3px solid #f5c518 !important;
+        background: rgba(245,197,24,0.05) !important;
+        font-family: 'Share Tech Mono', monospace !important;
+    }
+
+    /* === DIVIDER === */
+    hr {
+        border: none !important;
+        border-top: 1px solid rgba(245,197,24,0.15) !important;
+        box-shadow: 0 0 8px rgba(245,197,24,0.1) !important;
+    }
+
+    /* === DATAFRAME === */
+    [data-testid="stDataFrame"] {
+        border: 1px solid rgba(245,197,24,0.2) !important;
+    }
+    [data-testid="stDataFrame"] th {
+        background: rgba(245,197,24,0.1) !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        letter-spacing: 1px !important;
+        text-transform: uppercase !important;
+        color: #f5c518 !important;
+    }
+
+    /* === SIDEBAR (pokud je) === */
+    [data-testid="stSidebar"] {
+        background: #050505 !important;
+        border-right: 1px solid rgba(245,197,24,0.2) !important;
+    }
+
+    /* === CAPTION / SMALL TEXT === */
+    [data-testid="stCaptionContainer"] {
+        font-family: 'Share Tech Mono', monospace !important;
+        color: rgba(245,197,24,0.4) !important;
+    }
+
+    /* === FORM === */
+    [data-testid="stForm"] {
+        border: 1px solid rgba(245,197,24,0.15) !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.3) !important;
+        padding: 1rem !important;
+    }
+
+    /* Corner decoration helper */
+    .hud-corner {
+        position: absolute;
+        width: 12px; height: 12px;
+    }
+    .hud-corner.tl { top: 0; left: 0; border-top: 2px solid #f5c518; border-left: 2px solid #f5c518; }
+    .hud-corner.tr { top: 0; right: 0; border-top: 2px solid #f5c518; border-right: 2px solid #f5c518; }
+    .hud-corner.bl { bottom: 0; left: 0; border-bottom: 2px solid #f5c518; border-left: 2px solid #f5c518; }
+    .hud-corner.br { bottom: 0; right: 0; border-bottom: 2px solid #f5c518; border-right: 2px solid #f5c518; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -268,7 +558,7 @@ st.markdown("""
 nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6, nav_col7, nav_col8, nav_col9, nav_col10 = st.columns([2, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 with nav_col1:
-    st.markdown('<div class="logo">⚡ WAYNE FLEET</div>', unsafe_allow_html=True)
+    st.markdown('<div class="logo">▸ WAYNE//FLEET</div>', unsafe_allow_html=True)
 
 with nav_col2:
     if st.button("📊 Dashboard", width='stretch', key='nav_dashboard'):
@@ -319,7 +609,7 @@ elif st.session_state['page'] == 'auta':
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown("### Fleet Overview - REAL DATA")
+        st.markdown("### ◈ Fleet Overview")
     with col2:
         if st.button("➕ Přidat auto", width='stretch', type="primary"):
             st.session_state['show_add_car_form'] = not st.session_state['show_add_car_form']
@@ -394,18 +684,19 @@ elif st.session_state['page'] == 'auta':
             procento_splaceno = stats['procento_splaceno'] if stats else 0
             
             # Car card header
-            typ_badge = "🔑 VLASTNÍ" if car.typ_vlastnictvi == 'vlastni' else "📋 PRONÁJEM"
-            typ_class = "background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" if car.typ_vlastnictvi == 'vlastni' else "background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"
-            
+            typ_badge = "VLASTNÍ" if car.typ_vlastnictvi == 'vlastni' else "PRONÁJEM"
+            typ_border = "border:1px solid #a78bfa; color:#a78bfa; text-shadow:0 0 6px rgba(167,139,250,0.6);" if car.typ_vlastnictvi == 'vlastni' else "border:1px solid #f5c518; color:#f5c518; text-shadow:0 0 6px rgba(245,197,24,0.6);"
+
             st.markdown(f"""
             <div class="car-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <div>
-                        <div class="car-spz">🚗 {car.spz}</div>
-                        <div style="color: rgba(255,255,255,0.6); margin-top: 0.5rem;">{car.model} ({car.rok})</div>
+                        <div class="car-spz">{car.spz}</div>
+                        <div style="font-family:Share Tech Mono,monospace; color: rgba(245,197,24,0.4); font-size:0.8rem; margin-top: 0.3rem; letter-spacing:1px;">{car.model.upper()} · {car.rok}</div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <div style="{typ_class} color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">{typ_badge}</div>
+                    <div style="display: flex; gap: 0.5rem; align-items:center;">
+                        <div style="{typ_border} background:transparent; padding: 0.25rem 0.7rem;
+                             font-family:Share Tech Mono,monospace; font-size: 0.7rem; letter-spacing:2px;">{typ_badge}</div>
                         <div class="{status_class}">{status_text}</div>
                     </div>
                 </div>
@@ -585,7 +876,7 @@ elif st.session_state['page'] == 'ridici':
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.markdown("### Řidiči - REAL DATA")
+        st.markdown("### ◈ Správa řidičů")
     with col2:
         if st.button("➕ Přidat řidiče", width='stretch', type="primary"):
             st.session_state['show_add_driver_form'] = not st.session_state['show_add_driver_form']
@@ -891,9 +1182,14 @@ elif st.session_state['page'] == 'vyuctovani':
         
         # Celkové DPH
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 2rem; border-radius: 16px; text-align: center; color: white; margin-top: 2rem;">
-            <div style="font-size: 1rem; opacity: 0.9; margin-bottom: 0.5rem;">CELKOVÉ DPH K ODVEDENÍ</div>
-            <div style="font-size: 3rem; font-weight: 900;">{total_vat:,.2f} Kč</div>
+        <div style="background: rgba(57,255,20,0.05); border: 1px solid #39ff14;
+             clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+             padding: 2rem; text-align: center; color: white; margin-top: 2rem;
+             box-shadow: 0 0 30px rgba(57,255,20,0.15), inset 0 0 30px rgba(57,255,20,0.04);">
+            <div style="font-family: Share Tech Mono, monospace; font-size: 0.75rem; letter-spacing: 3px;
+                 color: rgba(57,255,20,0.6); margin-bottom: 0.5rem;">◈ CELKOVÉ DPH K ODVEDENÍ</div>
+            <div style="font-family: Orbitron, monospace; font-size: 2.5rem; font-weight: 700;
+                 color: #39ff14; text-shadow: 0 0 20px rgba(57,255,20,0.7);">{total_vat:,.2f} KČ</div>
         </div>
         """, unsafe_allow_html=True)
         
