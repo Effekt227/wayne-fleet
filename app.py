@@ -405,6 +405,15 @@ st.markdown("""
         background: rgba(245,197,24,0.2) !important;
     }
 
+    /* Aktivní stránka v menu (type=primary) */
+    .stButton > button[kind="primary"] {
+        background: rgba(245,197,24,0.15) !important;
+        border-color: #f5c518 !important;
+        color: #f5c518 !important;
+        text-shadow: 0 0 8px rgba(245,197,24,0.7) !important;
+        box-shadow: 0 0 15px rgba(245,197,24,0.2), inset 0 0 15px rgba(245,197,24,0.05) !important;
+    }
+
     /* === METRIKY === */
     [data-testid="stMetricValue"] {
         font-family: 'Orbitron', monospace !important;
@@ -554,49 +563,142 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Top Navigation
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6, nav_col7, nav_col8, nav_col9, nav_col10 = st.columns([2, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+# ── Navigační session state ───────────────────────────────────────────
+if 'nav_open' not in st.session_state:
+    st.session_state['nav_open'] = False
 
-with nav_col1:
+# Mapa stránek: klíč → (label, ikona)
+_NAV_PAGES = {
+    'dashboard':  ('Dashboard',   '◈'),
+    'auta':       ('Auta',        '◉'),
+    'ridici':     ('Řidiči',      '◉'),
+    'vyuctovani': ('Vyúčtování',  '◉'),
+    'kalendar':   ('Kalendář',    '◉'),
+    'finance':    ('Finance',     '◉'),
+    'statistiky': ('Statistiky',  '◉'),
+    'smlouvy':    ('Smlouvy',     '◉'),
+    'banka':      ('Banka',       '◉'),
+}
+
+current_page = st.session_state.get('page', 'dashboard')
+current_label = _NAV_PAGES.get(current_page, ('–', '◈'))[0]
+
+# ── Top bar: Logo | Breadcrumb | Hamburger ────────────────────────────
+nb_logo, nb_mid, nb_btn = st.columns([3, 5, 2])
+
+with nb_logo:
     st.markdown('<div class="logo">▸ WAYNE//FLEET</div>', unsafe_allow_html=True)
 
-with nav_col2:
-    if st.button("📊 Dashboard", width='stretch', key='nav_dashboard'):
-        st.session_state['page'] = 'dashboard'
+with nb_mid:
+    st.markdown(
+        f"<div style='padding-top:0.55rem; font-family:Share Tech Mono,monospace; "
+        f"font-size:0.75rem; color:rgba(245,197,24,0.4); letter-spacing:3px;'>"
+        f"SYS / <span style='color:#f5c518; text-shadow:0 0 8px rgba(245,197,24,0.5);'>"
+        f"{current_label.upper()}</span></div>",
+        unsafe_allow_html=True
+    )
 
-with nav_col3:
-    if st.button("🚗 Auta", width='stretch', key='nav_auta'):
-        st.session_state['page'] = 'auta'
+with nb_btn:
+    menu_label = "✕  ZAVŘÍT" if st.session_state['nav_open'] else "≡  MENU"
+    if st.button(menu_label, key='nav_toggle', width='stretch'):
+        st.session_state['nav_open'] = not st.session_state['nav_open']
+        st.rerun()
 
-with nav_col4:
-    if st.button("👥 Řidiči", width='stretch', key='nav_ridici'):
-        st.session_state['page'] = 'ridici'
+# ── Rozbalovací menu ──────────────────────────────────────────────────
+if st.session_state['nav_open']:
+    st.markdown("""
+    <div style='border:1px solid rgba(245,197,24,0.25);
+         border-top:2px solid #f5c518;
+         background:rgba(0,0,0,0.92);
+         padding:1rem 1.5rem 1.2rem;
+         margin-bottom:0.5rem;
+         box-shadow:0 8px 40px rgba(245,197,24,0.1);
+         position:relative;'>
+      <div style='position:absolute; top:0; left:0; width:60px; height:2px;
+           background:#f5c518; box-shadow:0 0 10px #f5c518;'></div>
+      <div style='font-family:Share Tech Mono,monospace; font-size:0.65rem;
+           color:rgba(245,197,24,0.3); letter-spacing:3px; margin-bottom:0.8rem;'>
+           NAVIGACE — VYBERTE MODUL</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-with nav_col5:
-    if st.button("💰 Vyúčtování", width='stretch', key='nav_vyuctovani'):
-        st.session_state['page'] = 'vyuctovani'
+    # Řada 1: 5 tlačítek
+    mn1, mn2, mn3, mn4, mn5 = st.columns(5)
+    with mn1:
+        active = current_page == 'dashboard'
+        if st.button("◈  Dashboard", key='nav_dashboard', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'dashboard'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn2:
+        active = current_page == 'auta'
+        if st.button("◉  Auta", key='nav_auta', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'auta'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn3:
+        active = current_page == 'ridici'
+        if st.button("◉  Řidiči", key='nav_ridici', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'ridici'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn4:
+        active = current_page == 'vyuctovani'
+        if st.button("◉  Vyúčtování", key='nav_vyuctovani', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'vyuctovani'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn5:
+        active = current_page == 'kalendar'
+        if st.button("◉  Kalendář", key='nav_kalendar', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'kalendar'
+            st.session_state['nav_open'] = False
+            st.rerun()
 
-with nav_col6:
-    if st.button("📅 Kalendář", width='stretch', key='nav_kalendar'):
-        st.session_state['page'] = 'kalendar'
+    # Řada 2: 4 tlačítka
+    mn6, mn7, mn8, mn9 = st.columns(4)
+    with mn6:
+        active = current_page == 'finance'
+        if st.button("◉  Finance", key='nav_finance', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'finance'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn7:
+        active = current_page == 'statistiky'
+        if st.button("◉  Statistiky", key='nav_statistiky', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'statistiky'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn8:
+        active = current_page == 'smlouvy'
+        if st.button("◉  Smlouvy", key='nav_smlouvy', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'smlouvy'
+            st.session_state['nav_open'] = False
+            st.rerun()
+    with mn9:
+        active = current_page == 'banka'
+        if st.button("◉  Banka", key='nav_banka', width='stretch',
+                     type='primary' if active else 'secondary'):
+            st.session_state['page'] = 'banka'
+            st.session_state['nav_open'] = False
+            st.rerun()
 
-with nav_col7:
-    if st.button("💳 Finance", width='stretch', key='nav_finance'):
-        st.session_state['page'] = 'finance'
+    st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
 
-with nav_col8:
-    if st.button("📈 Statistiky", width='stretch', key='nav_statistiky'):
-        st.session_state['page'] = 'statistiky'
-
-with nav_col9:
-    if st.button("📄 Smlouvy", width='stretch', key='nav_smlouvy'):
-        st.session_state['page'] = 'smlouvy'
-
-with nav_col10:
-    if st.button("🏦 Banka", width='stretch', key='nav_banka'):
-        st.session_state['page'] = 'banka'
-
-st.markdown("<br>", unsafe_allow_html=True)
+# Tenká dělící linka pod navbarem
+st.markdown(
+    "<div style='height:1px; background:linear-gradient(90deg,#f5c518,rgba(245,197,24,0.1),transparent); "
+    "box-shadow:0 0 8px rgba(245,197,24,0.2); margin-bottom:1rem;'></div>",
+    unsafe_allow_html=True
+)
 
 # ==================== DASHBOARD PAGE ====================
 if st.session_state['page'] == 'dashboard':
