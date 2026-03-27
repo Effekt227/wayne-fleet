@@ -787,7 +787,11 @@ def generate_predavaci_protokol_pdf(data: dict) -> bytes:
     story.append(Paragraph("Stav vozidla při předání", s['section']))
 
     def _check_row(polozka, stav, poznamka=''):
-        return [polozka, stav or '_' * 12, poznamka or '_' * 20]
+        return [
+            Paragraph(polozka, s['field']),
+            Paragraph(stav or '_' * 12, s['field']),
+            Paragraph(poznamka or '_' * 20, s['field']),
+        ]
 
     check_data = [
         [Paragraph('<b>Položka</b>', s['label']),
