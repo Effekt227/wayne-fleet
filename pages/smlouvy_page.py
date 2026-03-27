@@ -1029,13 +1029,131 @@ def generate_zbaveni_odpovednosti_pdf(data: dict) -> bytes:
 # Streamlit UI
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─────────────────────────────────────────────────────────────────────────────
+# PDF: Dohoda o poskytnutí tankovací karty
+# ─────────────────────────────────────────────────────────────────────────────
+
+def generate_tankovaci_karta_pdf(data: dict) -> bytes:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=20*mm, rightMargin=20*mm,
+                            topMargin=20*mm, bottomMargin=20*mm)
+    s = _s()
+    story = []
+
+    story.append(Paragraph("DOHODA O POSKYTNUTÍ TANKOVACÍ KARTY", s['h1']))
+    story.append(Spacer(1, 5*mm))
+
+    story.append(Paragraph("Smluvní strany", s['h2']))
+    story.append(Paragraph("Poskytovatel:", s['label']))
+    for line in [
+        "Wayne Fleet s.r.o.",
+        "Sídlo: Příčná 1892/4, 110 00 Praha 1 – Nové Město",
+        "IČO: 24083127",
+        "Zastoupena: Pavel Kropáč, jednatel",
+        '(dále jen „Poskytovatel")',
+    ]:
+        story.append(Paragraph(line, s['field']))
+    story.append(Spacer(1, 3*mm))
+    story.append(Paragraph("a", s['field']))
+    story.append(Spacer(1, 3*mm))
+    story.append(Paragraph("Uživatel (řidič):", s['label']))
+    story.append(_fld("Jméno a příjmení", data.get('jmeno'), s))
+    story.append(_fld("Datum narození", data.get('datum_narozeni'), s))
+    story.append(_fld("Adresa bydliště", data.get('adresa'), s))
+    story.append(Paragraph('(dále jen „Uživatel")', s['field']))
+    story.append(Spacer(1, 5*mm))
+
+    story.append(Paragraph("Článek I – Předmět dohody", s['h2']))
+    story.append(Paragraph(
+        "1. Poskytovatel přenechává Uživateli k používání tankovací kartu za účelem čerpání pohonných hmot "
+        "pro vozidlo provozované v rámci spolupráce s Poskytovatelem.", s['body']))
+    story.append(Paragraph(
+        "2. Tankovací karta zůstává po celou dobu trvání této dohody majetkem Poskytovatele.", s['body']))
+    story.append(Spacer(1, 4*mm))
+
+    story.append(Paragraph("Článek II – Podmínky čerpání a evidence dokladů", s['h2']))
+    story.append(Paragraph(
+        "1. Uživatel hradí veškeré pohonné hmoty čerpané prostřednictvím tankovací karty v plné výši. "
+        "Náklady za tankování nejsou součástí žádné jiné dohody ani paušální platby.", s['body']))
+    story.append(Paragraph(
+        "2. Uživatel je povinen při každém tankování zaslat Poskytovateli fotografii nebo kopii "
+        "dokladu o čerpání pohonných hmot (paragon, pokladní doklad), a to nejpozději do 24 hodin "
+        "od provedení transakce.", s['body']))
+    story.append(Paragraph(
+        "3. Částka za čerpání bude Uživateli naúčtována výhradně na základě dokladů zaslaných "
+        "dle odstavce 2. V případě, že Uživatel doklady nezašle nebo je zašle pozdě, bude mu "
+        "naúčtována částka odpovídající pohybům evidovaným na kartě. Poskytovatel nenese "
+        "odpovědnost za případné rozdíly způsobené nedodáním dokladů Uživatelem.", s['body']))
+    story.append(Spacer(1, 4*mm))
+
+    story.append(Paragraph("Článek III – Platební podmínky a sankce", s['h2']))
+    story.append(Paragraph(
+        "1. Čerpání pohonných hmot bude Uživateli pravidelně vyúčtováno. V případě vzniku záporného "
+        "zůstatku (dluhu) je Uživatel povinen uhradit celou dlužnou částku do <b>10 dnů</b> "
+        "od doručení výzvy k úhradě.", s['body']))
+    story.append(Paragraph(
+        "2. Při nedodržení lhůty splatnosti dle odstavce 1 je Poskytovatel oprávněn účtovat "
+        "smluvní pokutu ve výši <b>100 Kč za každý započatý den prodlení</b> s úhradou.", s['body']))
+    story.append(Paragraph(
+        "3. Smluvní pokuta je splatná spolu s dlužnou částkou a Poskytovatel je oprávněn ji "
+        "odečíst z jakéhokoliv budoucího vyúčtování Uživatele.", s['body']))
+    story.append(Spacer(1, 4*mm))
+
+    story.append(Paragraph("Článek IV – Odpovědnost Uživatele", s['h2']))
+    story.append(Paragraph(
+        "1. Uživatel odpovídá za veškeré transakce provedené prostřednictvím jemu svěřené tankovací karty.", s['body']))
+    story.append(Paragraph(
+        "2. V případě ztráty nebo odcizení karty je Uživatel povinen bezodkladně informovat "
+        "Poskytovatele, který kartu zablokuje. Do okamžiku nahlášení odpovídá Uživatel za veškeré "
+        "transakce provedené kartou.", s['body']))
+    story.append(Paragraph(
+        "3. Uživatel bere na vědomí, že nedodáním dokladů o čerpání pohonných hmot dle Článku II "
+        "odst. 2 může dojít k naúčtování vyšší částky, než odpovídá skutečnému čerpání. "
+        "Poskytovatel nenese za takovýto případ odpovědnost.", s['body']))
+    story.append(Spacer(1, 4*mm))
+
+    story.append(Paragraph("Článek V – Vrácení karty a ukončení dohody", s['h2']))
+    story.append(Paragraph(
+        "1. Tato dohoda se uzavírá na dobu neurčitou. Každá ze stran ji může ukončit s okamžitou "
+        "účinností, nejpozději však ke dni ukončení spolupráce stran.", s['body']))
+    story.append(Paragraph(
+        "2. Uživatel je povinen vrátit tankovací kartu Poskytovateli nejpozději v den ukončení dohody "
+        "nebo spolupráce. Při ztrátě nebo zničení karty zaviněném Uživatelem je Uživatel povinen "
+        "uhradit náklady na vydání náhradní karty.", s['body']))
+    story.append(Paragraph(
+        "3. Veškeré dosud nezaplacené částky za čerpání a případné smluvní pokuty jsou splatné "
+        "nejpozději ke dni ukončení dohody.", s['body']))
+    story.append(Spacer(1, 4*mm))
+
+    story.append(Paragraph("Článek VI – Závěrečná ustanovení", s['h2']))
+    story.append(Paragraph(
+        "1. Tato dohoda nabývá účinnosti dnem podpisu oběma stranami.", s['body']))
+    story.append(Paragraph(
+        "2. Dohoda je vyhotovena ve dvou stejnopisech, z nichž každá strana obdrží jedno vyhotovení.", s['body']))
+    story.append(Spacer(1, 10*mm))
+
+    datum_str = data.get('datum_podpisu', date.today().strftime('%d.%m.%Y'))
+    story.append(Paragraph(f"V Praze dne: {datum_str}", s['field']))
+    story.append(Spacer(1, 5*mm))
+    story.append(_sig_table(
+        "Pavel Kropáč",
+        "jednatel Wayne Fleet s.r.o.",
+        "Uživatel:",
+        data.get('jmeno', '')
+    ))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
 def render_smlouvy_page():
     st.markdown("## 📄 Smlouvy")
 
     drivers = get_all_drivers()
     cars = get_all_cars()
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🚗 Smlouva o pronájmu vozidla", "📱 Dohoda Bolt / Uber", "📋 Předávací protokol", "⚖️ Plná moc k přepisu", "🛡️ Zbavení odpovědnosti"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🚗 Smlouva o pronájmu vozidla", "📱 Dohoda Bolt / Uber", "📋 Předávací protokol", "⚖️ Plná moc k přepisu", "🛡️ Zbavení odpovědnosti", "⛽ Tankovací karta"])
 
     # ── TAB 1: Smlouva o pronájmu ──────────────────────────────────────────
     with tab1:
@@ -1520,3 +1638,58 @@ def render_smlouvy_page():
                 st.success("PDF vygenerováno — klikni na tlačítko pro stažení.")
             except Exception as e:
                 st.error(f"Chyba při generování PDF: {e}")
+
+    # ── TAB 6: Tankovací karta ──────────────────────────────────────────────
+    with tab6:
+        st.markdown("#### Vyplň údaje")
+        st.info("Dohoda upravuje podmínky poskytnutí tankovací karty řidiči — čerpání hradí řidič, je povinen zasílat doklady, záporný zůstatek uhradí do 10 dní.")
+
+        driver_opts6 = {"— Nevybírat —": None}
+        driver_opts6.update({d.jmeno: d for d in drivers})
+        sel_d6 = st.selectbox("Předvyplnit řidiče", list(driver_opts6.keys()), key="tk_sel_d")
+        d_obj6 = driver_opts6[sel_d6]
+        did6 = d_obj6.id if d_obj6 else 0
+
+        st.markdown("---")
+        st.markdown("##### 👤 Uživatel (řidič)")
+        col_tk1, col_tk2 = st.columns(2)
+        with col_tk1:
+            tk_jmeno = st.text_input("Jméno a příjmení",
+                                     value=d_obj6.jmeno if d_obj6 else "",
+                                     key=f"tk_jmeno_{did6}")
+            tk_adresa = st.text_input("Adresa bydliště",
+                                      value=(d_obj6.adresa or "") if d_obj6 else "",
+                                      key=f"tk_adresa_{did6}")
+        with col_tk2:
+            _dn6 = ""
+            if d_obj6 and d_obj6.datum_narozeni:
+                _dn6 = d_obj6.datum_narozeni.strftime('%d.%m.%Y') if hasattr(d_obj6.datum_narozeni, 'strftime') else str(d_obj6.datum_narozeni)
+            tk_datum_narozeni = st.text_input("Datum narození (DD.MM.RRRR)",
+                                              value=_dn6,
+                                              key=f"tk_dn_{did6}")
+            tk_datum_podpisu = st.date_input("Datum podpisu", value=date.today(), key="tk_datum")
+
+        if st.button("📄 Generovat PDF dohody o tankovací kartě", key="gen_tk", width='stretch'):
+            if not tk_jmeno:
+                st.error("Vyplň jméno a příjmení.")
+            else:
+                pdf_data6 = {
+                    'jmeno': tk_jmeno,
+                    'datum_narozeni': tk_datum_narozeni,
+                    'adresa': tk_adresa,
+                    'datum_podpisu': tk_datum_podpisu.strftime('%d.%m.%Y'),
+                }
+                try:
+                    pdf_bytes6 = generate_tankovaci_karta_pdf(pdf_data6)
+                    fname6 = f"Dohoda_tankovaci_karta_{tk_jmeno.replace(' ', '_')}.pdf"
+                    st.download_button(
+                        "⬇️ Stáhnout dohodu o tankovací kartě (PDF)",
+                        data=pdf_bytes6,
+                        file_name=fname6,
+                        mime="application/pdf",
+                        key="dl_tk",
+                        width='stretch'
+                    )
+                    st.success("PDF vygenerováno — klikni na tlačítko pro stažení.")
+                except Exception as e:
+                    st.error(f"Chyba při generování PDF: {e}")
