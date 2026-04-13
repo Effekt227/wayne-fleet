@@ -6,7 +6,6 @@ Statistiky flotily: příjmy, výdaje, zisky, přehled aut a řidičů
 import calendar as cal_mod
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 from datetime import date, timedelta
 from utils.cached_queries import (
     cached_cars as get_all_cars,
@@ -25,35 +24,6 @@ MESICE_CZ = [
     'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
     'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
 ]
-
-def _base_layout():
-    """Returns a fresh Plotly layout dict with the app's dark theme."""
-    return {
-        "paper_bgcolor": "rgba(0,0,0,0)",
-        "plot_bgcolor": "rgba(0,0,0,0)",
-        "font": {"color": "rgba(255,255,255,0.7)", "family": "Rajdhani, sans-serif"},
-        "margin": {"l": 10, "r": 10, "t": 10, "b": 40},
-        "xaxis": {
-            "gridcolor": "rgba(255,255,255,0.06)",
-            "zerolinecolor": "rgba(255,255,255,0.1)",
-            "tickfont": {"size": 12},
-        },
-        "yaxis": {
-            "gridcolor": "rgba(255,255,255,0.06)",
-            "zerolinecolor": "rgba(255,255,255,0.1)",
-            "tickfont": {"size": 12},
-        },
-        "legend": {
-            "bgcolor": "rgba(0,0,0,0)",
-            "bordercolor": "rgba(255,255,255,0.1)",
-            "borderwidth": 1,
-            "orientation": "h",
-            "yanchor": "bottom",
-            "y": 1.02,
-            "xanchor": "left",
-            "x": 0,
-        },
-    }
 
 
 def _month_label(m: dict) -> str:
@@ -164,50 +134,25 @@ def _render_financial_overview():
     labels = [_month_label(m) for m in monthly_data]
 
     if has_data:
-        # Grouped bar chart
-        fig_bar = go.Figure()
-        fig_bar.add_trace(go.Bar(
-            name="Příjmy",
-            x=labels,
-            y=[m['vydano_celkem'] for m in monthly_data],
-            marker_color="#10b981",
-            hovertemplate="<b>%{x}</b><br>Příjmy: %{y:,.0f} Kč<extra></extra>",
-        ))
-        fig_bar.add_trace(go.Bar(
-            name="Výdaje",
-            x=labels,
-            y=[m['prijato_celkem'] for m in monthly_data],
-            marker_color="#ef4444",
-            hovertemplate="<b>%{x}</b><br>Výdaje: %{y:,.0f} Kč<extra></extra>",
-        ))
-        lay = _base_layout()
-        lay["barmode"] = "group"
-        lay["height"] = 280
-        lay["yaxis"]["ticksuffix"] = " Kč"
-        fig_bar.update_layout(lay)
-        st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
+        chart_df = pd.DataFrame(
+            {
+                'Příjmy': [m['vydano_celkem'] for m in monthly_data],
+                'Výdaje': [m['prijato_celkem'] for m in monthly_data],
+            },
+            index=labels,
+        )
+        st.bar_chart(chart_df, color=['#10b981', '#ef4444'])
 
     if len(monthly_data) > 1 and has_data:
-        fig_line = go.Figure()
-        fig_line.add_trace(go.Scatter(
-            name="Bilance",
-            x=labels,
-            y=[m['bilance'] for m in monthly_data],
-            mode="lines+markers",
-            line=dict(color="#f5c518", width=2.5),
-            marker=dict(size=7, color="#f5c518"),
-            fill="tozeroy",
-            fillcolor="rgba(245,197,24,0.08)",
-            hovertemplate="<b>%{x}</b><br>Bilance: %{y:,.0f} Kč<extra></extra>",
-        ))
-        fig_line.add_hline(y=0, line_color="rgba(255,255,255,0.2)", line_width=1)
-        lay2 = _base_layout()
-        lay2["height"] = 220
-        lay2["showlegend"] = False
-        lay2["yaxis"]["ticksuffix"] = " Kč"
-        lay2["title"] = {"text": "Bilance / Zisk", "font": {"color": "rgba(255,255,255,0.5)", "size": 13}, "x": 0}
-        fig_line.update_layout(lay2)
-        st.plotly_chart(fig_line, use_container_width=True, config={"displayModeBar": False})
+        st.markdown(
+            "<div style='font-size:0.82rem; color:rgba(255,255,255,0.45); margin:0.5rem 0 0.2rem;'>Bilance / Zisk</div>",
+            unsafe_allow_html=True,
+        )
+        profit_df = pd.DataFrame(
+            {'Bilance': [m['bilance'] for m in monthly_data]},
+            index=labels,
+        )
+        st.line_chart(profit_df, color=['#f5c518'])
 
     # ── Tabulka ───────────────────────────────────────────────────────
     st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
@@ -362,33 +307,16 @@ def _render_auta():
     visible_cars = [c for c in all_cars if c.status != 'retired']
     if visible_cars:
         st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
-        occ_values = [occupancy.get(c.id, 0) for c in visible_cars]
-        occ_colors = [
-            "#10b981" if (occupancy.get(c.id, 0) / days_in_month) >= 0.7
-            else ("#f59e0b" if (occupancy.get(c.id, 0) / days_in_month) >= 0.3 else "#ef4444")
-            for c in visible_cars
-        ]
-        fig_occ = go.Figure(go.Bar(
-            x=[c.spz for c in visible_cars],
-            y=occ_values,
-            marker_color=occ_colors,
-            hovertemplate="<b>%{x}</b><br>Obsazeno: %{y} dní<extra></extra>",
-        ))
-        fig_occ.add_hline(
-            y=days_in_month,
-            line_dash="dot",
-            line_color="rgba(255,255,255,0.25)",
-            annotation_text=f"{days_in_month} dní v měsíci",
-            annotation_font_color="rgba(255,255,255,0.4)",
-            annotation_position="top right",
+        st.markdown(
+            f"<div style='font-size:0.82rem; color:rgba(255,255,255,0.45); margin-bottom:0.2rem;'>"
+            f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year} (dní)</div>",
+            unsafe_allow_html=True,
         )
-        lay3 = _base_layout()
-        lay3["height"] = 220
-        lay3["showlegend"] = False
-        lay3["title"] = {"text": f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year}", "font": {"color": "rgba(255,255,255,0.5)", "size": 13}, "x": 0}
-        lay3["yaxis"]["title"] = "Dní"
-        fig_occ.update_layout(lay3)
-        st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False})
+        occ_df = pd.DataFrame(
+            {'Obsazené dny': [occupancy.get(c.id, 0) for c in visible_cars]},
+            index=[c.spz for c in visible_cars],
+        )
+        st.bar_chart(occ_df, color=['#10b981'])
 
 
 # ══════════════════════════════════════════════════════════════════
