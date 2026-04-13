@@ -6,6 +6,7 @@ Statistiky flotily: příjmy, výdaje, zisky, přehled aut a řidičů
 import calendar as cal_mod
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from datetime import date, timedelta
 from utils.cached_queries import (
     cached_cars as get_all_cars,
@@ -25,300 +26,378 @@ MESICE_CZ = [
     'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
 ]
 
+PLOTLY_LAYOUT = dict(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="rgba(255,255,255,0.7)", family="Rajdhani, sans-serif"),
+    margin=dict(l=10, r=10, t=10, b=40),
+    xaxis=dict(
+        gridcolor="rgba(255,255,255,0.06)",
+        zerolinecolor="rgba(255,255,255,0.1)",
+        tickfont=dict(size=12),
+    ),
+    yaxis=dict(
+        gridcolor="rgba(255,255,255,0.06)",
+        zerolinecolor="rgba(255,255,255,0.1)",
+        tickfont=dict(size=12),
+    ),
+    legend=dict(
+        bgcolor="rgba(0,0,0,0)",
+        bordercolor="rgba(255,255,255,0.1)",
+        borderwidth=1,
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="left",
+        x=0,
+    ),
+    hoverlabel=dict(
+        bgcolor="rgba(20,20,20,0.95)",
+        bordercolor="rgba(245,197,24,0.4)",
+        font=dict(color="white", size=13),
+    ),
+)
 
-def render_stats_page():
-    st.markdown("## 📈 Statistiky flotily")
-
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Finanční přehled",
-        "🚗 Flotila",
-        "👥 Řidiči",
-        "💡 Výnosnost & Obsazenost",
-        "📋 Nábor & Expirace",
-    ])
-
-    with tab1:
-        _render_financial_overview()
-
-    with tab2:
-        _render_fleet_overview()
-
-    with tab3:
-        _render_driver_overview()
-
-    with tab4:
-        _render_profitability()
-
-    with tab5:
-        _render_nabor_expirace()
-
-
-# ══════════════════════════════════════════════════════════════════
-# TAB 1: FINANČNÍ PŘEHLED
-# ══════════════════════════════════════════════════════════════════
 
 def _month_label(m: dict) -> str:
-    """Krátký popisek měsíce: 'Bře 26'"""
     zkratky = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čer', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro']
     return f"{zkratky[m['mesic']-1]} {m['rok'] % 100:02d}"
 
 
+def _kpi_card(label: str, value: str, sub: str = "", color: str = "#f5c518", icon: str = "") -> str:
+    return (
+        f"<div style='background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); "
+        f"border-top:2px solid {color}; border-radius:10px; padding:1rem 1.2rem;'>"
+        f"<div style='font-size:0.78rem; color:rgba(255,255,255,0.45); text-transform:uppercase; "
+        f"letter-spacing:0.08em; margin-bottom:0.4rem;'>{icon} {label}</div>"
+        f"<div style='font-size:1.5rem; font-weight:700; color:{color}; line-height:1.1;'>{value}</div>"
+        f"{'<div style=\"font-size:0.78rem; color:rgba(255,255,255,0.4); margin-top:0.3rem;\">' + sub + '</div>' if sub else ''}"
+        f"</div>"
+    )
+
+
+def render_stats_page():
+    st.markdown("## Statistiky flotily")
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Finance",
+        "Auta",
+        "Řidiči",
+        "Expirace & Nábor",
+    ])
+
+    with tab1:
+        _render_financial_overview()
+    with tab2:
+        _render_auta()
+    with tab3:
+        _render_driver_overview()
+    with tab4:
+        _render_expirace_nabor()
+
+
+# ══════════════════════════════════════════════════════════════════
+# TAB 1: FINANCE
+# ══════════════════════════════════════════════════════════════════
+
 def _render_financial_overview():
     today = date.today()
 
-    # ── Filtr období ──────────────────────────────────────────────────
-    mode = st.radio(
-        "Zobrazit období:",
-        options=["Přehled (13 měs.)", "Konkrétní měsíc", "Konkrétní rok", "Vlastní období"],
-        horizontal=True,
-        key="stats_filter_mode",
-    )
-
-    if mode == "Přehled (13 měs.)":
-        monthly_data = get_monthly_chart_data(3, 9)
-        popis_obdobi = f"{_month_label(monthly_data[0])} – {_month_label(monthly_data[-1])} (3 měs. zpět + 9 dopředu)"
-
-    elif mode == "Konkrétní měsíc":
-        col_m, col_y, _ = st.columns([1, 1, 2])
-        sel_m = col_m.selectbox(
-            "Měsíc", range(1, 13), index=today.month - 1,
-            format_func=lambda x: MESICE_CZ[x - 1], key="stats_sel_m",
+    # ── Filtr ────────────────────────────────────────────────────────
+    col_f, col_spacer = st.columns([3, 5])
+    with col_f:
+        mode = st.segmented_control(
+            "Období",
+            options=["Tento měsíc", "Posledních 6M", f"Rok {today.year}"],
+            default="Posledních 6M",
+            key="stats_mode",
+            label_visibility="collapsed",
         )
-        sel_y = col_y.number_input(
-            "Rok", min_value=2020, max_value=2035, value=today.year, key="stats_sel_y",
-        )
-        s = get_monthly_summary(int(sel_y), sel_m)
-        s['rok'] = int(sel_y)
-        s['mesic'] = sel_m
-        s['label'] = f"{int(sel_y)}-{sel_m:02d}"
+
+    if mode == "Tento měsíc":
+        s = get_monthly_summary(today.year, today.month)
+        s['rok'] = today.year
+        s['mesic'] = today.month
+        s['label'] = f"{today.year}-{today.month:02d}"
         monthly_data = [s]
-        popis_obdobi = f"{MESICE_CZ[sel_m - 1]} {int(sel_y)}"
-
-    elif mode == "Konkrétní rok":
-        col_y, _ = st.columns([1, 3])
-        sel_y = col_y.number_input(
-            "Rok", min_value=2020, max_value=2035, value=today.year, key="stats_rok_y",
+    elif mode == f"Rok {today.year}":
+        monthly_data = get_monthly_chart_data_range(today.year, 1, today.year, 12)
+    else:  # Posledních 6M
+        start = today - timedelta(days=180)
+        monthly_data = get_monthly_chart_data_range(
+            start.year, start.month, today.year, today.month
         )
-        monthly_data = get_monthly_chart_data_range(int(sel_y), 1, int(sel_y), 12)
-        popis_obdobi = f"Celý rok {int(sel_y)}"
-
-    else:  # Vlastní období
-        col1, col2, col3, col4 = st.columns(4)
-        od_m = col1.selectbox(
-            "Od měsíce", range(1, 13),
-            format_func=lambda x: MESICE_CZ[x - 1], key="stats_od_m",
-        )
-        od_y = col2.number_input(
-            "Od roku", min_value=2020, max_value=2035, value=today.year, key="stats_od_y",
-        )
-        do_m = col3.selectbox(
-            "Do měsíce", range(1, 13), index=today.month - 1,
-            format_func=lambda x: MESICE_CZ[x - 1], key="stats_do_m",
-        )
-        do_y = col4.number_input(
-            "Do roku", min_value=2020, max_value=2035, value=today.year, key="stats_do_y",
-        )
-        od_y, do_y = int(od_y), int(do_y)
-        if (od_y, od_m) > (do_y, do_m):
-            st.warning("Počáteční datum musí být před koncovým.")
-            return
-        monthly_data = get_monthly_chart_data_range(od_y, od_m, do_y, do_m)
-        popis_obdobi = f"{MESICE_CZ[od_m - 1]} {od_y} – {MESICE_CZ[do_m - 1]} {do_y}"
+        # Omezit pouze na minulé/aktuální měsíce (bez nulových budoucích)
+        monthly_data = [
+            m for m in monthly_data
+            if (m['rok'], m['mesic']) <= (today.year, today.month)
+        ]
 
     if not monthly_data:
         st.info("Žádná data pro vybrané období.")
         return
 
-    st.markdown(
-        f"<div style='color:rgba(255,255,255,0.5); font-size:0.85rem; margin-bottom:0.5rem;'>"
-        f"Zobrazené období: <strong style='color:rgba(255,255,255,0.8);'>{popis_obdobi}</strong>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-
-    # ── Metriky ───────────────────────────────────────────────────────
+    # ── KPI karty ────────────────────────────────────────────────────
     this_month = next(
         (m for m in monthly_data if m['rok'] == today.year and m['mesic'] == today.month), {}
     )
     total_vydano = sum(m['vydano_celkem'] for m in monthly_data)
     total_prijato = sum(m['prijato_celkem'] for m in monthly_data)
     total_bilance = sum(m['bilance'] for m in monthly_data)
-    total_nezaplaceno_vydane = sum(m['vydano_nezaplaceno'] for m in monthly_data)
-    total_nezaplaceno_prijate = sum(m['prijato_nezaplaceno'] for m in monthly_data)
+    total_pohledavky = sum(m['vydano_nezaplaceno'] for m in monthly_data)
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric(
-        "📤 Příjmy celkem",
-        f"{total_vydano:,.0f} Kč",
-        delta=f"{this_month.get('vydano_celkem', 0):,.0f} Kč tento měsíc" if this_month else None,
-    )
-    col2.metric(
-        "📥 Výdaje celkem",
-        f"{total_prijato:,.0f} Kč",
-        delta=f"-{this_month.get('prijato_celkem', 0):,.0f} Kč tento měsíc" if this_month else None,
-        delta_color='inverse',
-    )
-    col3.metric(
-        "💰 Bilance (inkasováno)",
-        f"{total_bilance:,.0f} Kč",
-        delta=f"{this_month.get('bilance', 0):,.0f} Kč tento měsíc" if this_month else None,
-    )
-    col4.metric(
-        "⏳ Pohledávky / Závazky",
-        f"{total_nezaplaceno_vydane:,.0f} / {total_nezaplaceno_prijate:,.0f} Kč",
-        help="Nezaplaceno: vydané (čekám na příjem) / přijaté (mám uhradit)",
-    )
+    bilance_color = "#10b981" if total_bilance >= 0 else "#ef4444"
+    pohledavky_color = "#f59e0b" if total_pohledavky > 0 else "#10b981"
 
-    has_data = any(m['vydano_celkem'] > 0 or m['prijato_celkem'] > 0 for m in monthly_data)
-    sortable_labels = [m['label'] for m in monthly_data]
+    is_multi = len(monthly_data) > 1
+    sub_vydano = f"Tento měsíc: {this_month.get('vydano_celkem', 0):,.0f} Kč" if is_multi and this_month else ""
+    sub_prijato = f"Tento měsíc: {this_month.get('prijato_celkem', 0):,.0f} Kč" if is_multi and this_month else ""
+    sub_bilance = f"Inkasováno (zaplaceno)" if is_multi else ""
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown(_kpi_card("Příjmy celkem", f"{total_vydano:,.0f} Kč", sub_vydano, "#10b981", "↑"), unsafe_allow_html=True)
+    c2.markdown(_kpi_card("Výdaje celkem", f"{total_prijato:,.0f} Kč", sub_prijato, "#ef4444", "↓"), unsafe_allow_html=True)
+    c3.markdown(_kpi_card("Bilance", f"{total_bilance:,.0f} Kč", sub_bilance, bilance_color, "="), unsafe_allow_html=True)
+    c4.markdown(_kpi_card("Pohledávky", f"{total_pohledavky:,.0f} Kč", "Čekám na příjem", pohledavky_color, "⏳"), unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1.5rem;'></div>", unsafe_allow_html=True)
 
     # ── Grafy ─────────────────────────────────────────────────────────
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("#### Příjmy vs Výdaje")
+    has_data = any(m['vydano_celkem'] > 0 or m['prijato_celkem'] > 0 for m in monthly_data)
+    labels = [_month_label(m) for m in monthly_data]
 
     if has_data:
-        chart_df = pd.DataFrame(
-            {
-                'Příjmy': [m['vydano_celkem'] for m in monthly_data],
-                'Výdaje': [m['prijato_celkem'] for m in monthly_data],
-            },
-            index=sortable_labels,
+        # Grouped bar chart
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            name="Příjmy",
+            x=labels,
+            y=[m['vydano_celkem'] for m in monthly_data],
+            marker_color="#10b981",
+            hovertemplate="<b>%{x}</b><br>Příjmy: %{y:,.0f} Kč<extra></extra>",
+        ))
+        fig_bar.add_trace(go.Bar(
+            name="Výdaje",
+            x=labels,
+            y=[m['prijato_celkem'] for m in monthly_data],
+            marker_color="#ef4444",
+            hovertemplate="<b>%{x}</b><br>Výdaje: %{y:,.0f} Kč<extra></extra>",
+        ))
+        fig_bar.update_layout(
+            **PLOTLY_LAYOUT,
+            barmode="group",
+            height=280,
+            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], ticksuffix=" Kč"),
         )
-        st.bar_chart(chart_df, color=['#10b981', '#ef4444'])
-    else:
-        st.info("Zatím nejsou data pro toto období.")
+        st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
-    if len(monthly_data) > 1:
-        st.markdown("#### Zisk / bilance")
-        if has_data:
-            profit_df = pd.DataFrame(
-                {'Zisk': [m['bilance'] for m in monthly_data]},
-                index=sortable_labels,
-            )
-            st.line_chart(profit_df, color=['#f5c518'])
+    if len(monthly_data) > 1 and has_data:
+        fig_line = go.Figure()
+        fig_line.add_trace(go.Scatter(
+            name="Bilance",
+            x=labels,
+            y=[m['bilance'] for m in monthly_data],
+            mode="lines+markers",
+            line=dict(color="#f5c518", width=2.5),
+            marker=dict(size=7, color="#f5c518"),
+            fill="tozeroy",
+            fillcolor="rgba(245,197,24,0.08)",
+            hovertemplate="<b>%{x}</b><br>Bilance: %{y:,.0f} Kč<extra></extra>",
+        ))
+        fig_line.add_hline(y=0, line_color="rgba(255,255,255,0.2)", line_width=1)
+        fig_line.update_layout(
+            **PLOTLY_LAYOUT,
+            height=220,
+            showlegend=False,
+            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], ticksuffix=" Kč"),
+            title=dict(text="Bilance / Zisk", font=dict(color="rgba(255,255,255,0.5)", size=13), x=0),
+        )
+        st.plotly_chart(fig_line, use_container_width=True, config={"displayModeBar": False})
 
     # ── Tabulka ───────────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown("#### Měsíční přehled")
+    st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
     rows = []
     for m in monthly_data:
         je_aktualni = m['rok'] == today.year and m['mesic'] == today.month
-        je_budouci = (m['rok'], m['mesic']) > (today.year, today.month)
-        znacka = " 📍" if je_aktualni else (" 🔮" if je_budouci else "")
+        znacka = " ◀" if je_aktualni else ""
+        bilance_val = m['bilance']
         rows.append({
             'Měsíc': f"{MESICE_CZ[m['mesic']-1]} {m['rok']}{znacka}",
             'Příjmy': f"{m['vydano_celkem']:,.0f} Kč",
-            'Zaplaceno (příjmy)': f"{m['vydano_zaplaceno']:,.0f} Kč",
             'Výdaje': f"{m['prijato_celkem']:,.0f} Kč",
-            'Zaplaceno (výdaje)': f"{m['prijato_zaplaceno']:,.0f} Kč",
-            'Bilance': f"{m['bilance']:,.0f} Kč",
+            'Bilance': f"{bilance_val:+,.0f} Kč".replace("+", "+") if bilance_val >= 0 else f"{bilance_val:,.0f} Kč",
         })
     if rows:
-        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-    st.markdown(
-        "<div style='font-size:0.8rem; color:rgba(255,255,255,0.4); margin-top:0.3rem;'>"
-        "📍 = aktuální měsíc &nbsp;|&nbsp; 🔮 = budoucí (naplánované platby)"
-        "</div>",
-        unsafe_allow_html=True
-    )
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════════
-# TAB 2: FLOTILA
+# TAB 2: AUTA (Flotila + Výnosnost)
 # ══════════════════════════════════════════════════════════════════
 
-def _render_fleet_overview():
+def _render_auta():
+    today = date.today()
     all_cars = get_all_cars()
     if not all_cars:
         st.info("Žádná auta v databázi.")
         return
 
-    total_weekly = 0
-    total_service = 0
-    rows = []
+    days_in_month = cal_mod.monthrange(today.year, today.month)[1]
+    occupancy = get_fleet_occupancy_month(today.year, today.month)
+
+    active_cars = [c for c in all_cars if c.status == 'active']
+    total_weekly = sum((c.splatka_tyden or 0) for c in all_cars)
+    ocekavane_mesic = sum((c.cena_tyden_pronajem or 0) * 4.33 for c in active_cars)
+
+    # ── KPI ───────────────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3)
+    c1.markdown(_kpi_card("Aktivních aut", str(len(active_cars)), f"Celkem: {len(all_cars)}", "#f5c518", "🚗"), unsafe_allow_html=True)
+    c2.markdown(_kpi_card("Týdenní náklady", f"{total_weekly:,.0f} Kč", f"Měsíčně: {total_weekly*4.33:,.0f} Kč", "#ef4444", "💸"), unsafe_allow_html=True)
+    c3.markdown(_kpi_card("Očekávané příjmy / měsíc", f"{ocekavane_mesic:,.0f} Kč", "Aktivní auta × sazba", "#10b981", "💵"), unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1.2rem;'></div>", unsafe_allow_html=True)
+
+    # ── Karty aut ─────────────────────────────────────────────────────
+    alerts = []
 
     for car in all_cars:
         stats = get_car_stats(car.id) or {}
         service_cost = get_total_service_cost(car.id)
-        weekly = car.splatka_tyden or 0
-        total_weekly += weekly
-        total_service += service_cost
 
-        if car.typ_vlastnictvi == 'vlastni':
-            splaceno_str = f"{car.zaplaceno_splatek}/{car.celkem_splatek} splátek"
-            procento = stats.get('procento_splaceno', 0)
-            zbyvajici = stats.get('zbyvajici_splatka', 0)
+        prijmy_mesic = (car.cena_tyden_pronajem or 0) * 4.33
+        naklady_splatka = (car.splatka_tyden or 0) * 4.33
+        naklady_servis = service_cost / 12
+        naklady_celkem = naklady_splatka + naklady_servis
+        zisk = prijmy_mesic - naklady_celkem
+
+        obsazeno_dni = occupancy.get(car.id, 0)
+        obsazenost_pct = obsazeno_dni / days_in_month * 100 if days_in_month > 0 else 0
+
+        if car.status == 'active' and obsazeno_dni == 0:
+            alerts.append(car.spz)
+
+        # Barva borderu
+        if car.status == 'retired':
+            border_color = "#4b5563"
+        elif zisk >= 0:
+            border_color = "#10b981"
         else:
-            splaceno_str = "Pronájem"
-            procento = 100
-            zbyvajici = 0
+            border_color = "#ef4444"
 
-        km = car.celkem_km or 0
-        kc_per_km = f"{service_cost / km:.2f} Kč/km" if km > 0 else "—"
+        status_label = {'active': 'aktivní', 'service': 'servis', 'retired': 'vyřazeno'}.get(car.status, car.status)
+        status_color = {'active': '#10b981', 'service': '#f59e0b', 'retired': '#6b7280'}.get(car.status, '#6b7280')
+        zisk_color = "#10b981" if zisk >= 0 else "#ef4444"
+        zisk_sign = "+" if zisk >= 0 else ""
 
-        status_emoji = {'active': '✅', 'service': '🔧', 'retired': '🗄️'}.get(car.status, '❓')
+        # Progress bar obsazenost
+        occ_pct_clamped = min(obsazenost_pct, 100)
+        occ_color = "#10b981" if occ_pct_clamped >= 70 else ("#f59e0b" if occ_pct_clamped >= 30 else "#ef4444")
+        occ_bar = (
+            f"<div style='flex:1; background:rgba(255,255,255,0.08); border-radius:4px; height:8px; margin:auto 0;'>"
+            f"<div style='width:{occ_pct_clamped:.0f}%; height:100%; background:{occ_color}; border-radius:4px;'></div>"
+            f"</div>"
+        )
 
-        rows.append({
-            'Auto': f"{status_emoji} {car.spz}",
-            'Model': f"{car.model} ({car.rok})",
-            'Typ': '🔑 Vlastní' if car.typ_vlastnictvi == 'vlastni' else '📋 Pronájem',
-            'Náklady/týden': f"{weekly:,.0f} Kč",
-            'Splaceno': splaceno_str,
-            '% splaceno': f"{procento:.1f}%",
-            'Zbývá': f"{zbyvajici:,.0f} Kč" if zbyvajici > 0 else '—',
-            'Km celkem': f"{km:,}",
-            'Servisy': f"{service_cost:,.0f} Kč",
-            'Kč/km': kc_per_km,
-        })
-
-    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-
-    st.markdown("---")
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🚗 Počet aut", len(all_cars))
-    col2.metric("💸 Týdenní náklady flotily", f"{total_weekly:,.0f} Kč")
-    col3.metric("🔧 Celkové náklady na servisy", f"{total_service:,.0f} Kč")
-
-    st.markdown(
-        f"<div style='color:rgba(255,255,255,0.5); font-size:0.85rem; margin-top:0.5rem;'>"
-        f"Odhadované měsíční náklady (×4 týdny): "
-        f"<strong style='color:white;'>{total_weekly * 4:,.0f} Kč</strong> &nbsp;|&nbsp; "
-        f"Ročně (×52): <strong style='color:white;'>{total_weekly * 52:,.0f} Kč</strong>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-
-    # Progress bary pro vlastní auta
-    owned_cars = [c for c in all_cars if c.typ_vlastnictvi == 'vlastni']
-    if owned_cars:
-        st.markdown("---")
-        st.markdown("#### 📊 Průběh splácení vlastních aut")
-        for car in owned_cars:
-            stats = get_car_stats(car.id) or {}
+        # Progress bar splácení (pouze vlastní auta)
+        splaceni_html = ""
+        if car.typ_vlastnictvi == 'vlastni':
             procento = stats.get('procento_splaceno', 0)
-            zaplaceno = stats.get('zaplaceno', 0)
-            celkova_cena = stats.get('celkova_cena', 0)
-            bar_color = '#10b981' if procento >= 100 else '#f5c518'
+            clamped = min(procento, 100)
+            sp_color = "#10b981" if clamped >= 100 else "#f5c518"
+            splaceni_html = (
+                f"<div style='display:flex; align-items:center; gap:0.6rem; margin-top:0.5rem;'>"
+                f"<span style='font-size:0.75rem; color:rgba(255,255,255,0.4); white-space:nowrap;'>Splácení</span>"
+                f"<div style='flex:1; background:rgba(255,255,255,0.08); border-radius:4px; height:6px;'>"
+                f"<div style='width:{clamped:.0f}%; height:100%; background:{sp_color}; border-radius:4px;'></div>"
+                f"</div>"
+                f"<span style='font-size:0.75rem; color:{sp_color}; white-space:nowrap;'>{procento:.0f}%</span>"
+                f"</div>"
+            )
 
-            col_name, col_bar, col_pct = st.columns([2, 5, 1])
-            with col_name:
-                st.markdown(f"**{car.spz}** – {car.model}")
-            with col_bar:
-                st.markdown(
-                    f"<div style='background:rgba(255,255,255,0.1); border-radius:8px; height:16px; margin-top:0.4rem;'>"
-                    f"<div style='width:{min(procento,100):.1f}%; height:100%; "
-                    f"background:{bar_color}; border-radius:8px;'></div></div>"
-                    f"<div style='font-size:0.78rem; color:rgba(255,255,255,0.5); margin-top:2px;'>"
-                    f"{zaplaceno:,.0f} / {celkova_cena:,.0f} Kč</div>",
-                    unsafe_allow_html=True
-                )
-            with col_pct:
-                st.markdown(
-                    f"<div style='text-align:right; margin-top:0.3rem; font-weight:700; color:{bar_color};'>"
-                    f"{procento:.0f}%</div>",
-                    unsafe_allow_html=True
-                )
+        typ_badge = (
+            "<span style='font-size:0.72rem; color:rgba(255,255,255,0.35); "
+            "border:1px solid rgba(255,255,255,0.15); border-radius:4px; padding:1px 6px;'>"
+            + ("vlastní" if car.typ_vlastnictvi == 'vlastni' else "pronájem") +
+            "</span>"
+        )
+
+        card_html = (
+            f"<div style='background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); "
+            f"border-left:3px solid {border_color}; border-radius:10px; padding:0.9rem 1.1rem; margin-bottom:0.5rem;'>"
+            # Hlavička
+            f"<div style='display:flex; align-items:center; gap:0.8rem; margin-bottom:0.6rem;'>"
+            f"<span style='font-size:1rem; font-weight:700; color:white; letter-spacing:0.05em;'>{car.spz}</span>"
+            f"<span style='color:rgba(255,255,255,0.5); font-size:0.88rem;'>{car.model} ({car.rok})</span>"
+            f"{typ_badge}"
+            f"<span style='margin-left:auto; font-size:0.78rem; color:{status_color};'>{status_label}</span>"
+            f"</div>"
+            # Metriky
+            f"<div style='display:flex; gap:1.5rem; flex-wrap:wrap;'>"
+            f"<div><div style='font-size:0.72rem; color:rgba(255,255,255,0.35);'>Příjmy/měs</div>"
+            f"<div style='font-size:0.95rem; font-weight:600; color:#10b981;'>{prijmy_mesic:,.0f} Kč</div></div>"
+            f"<div><div style='font-size:0.72rem; color:rgba(255,255,255,0.35);'>Náklady/měs</div>"
+            f"<div style='font-size:0.95rem; font-weight:600; color:#ef4444;'>{naklady_celkem:,.0f} Kč</div></div>"
+            f"<div><div style='font-size:0.72rem; color:rgba(255,255,255,0.35);'>Zisk/měs (est.)</div>"
+            f"<div style='font-size:0.95rem; font-weight:700; color:{zisk_color};'>{zisk_sign}{zisk:,.0f} Kč</div></div>"
+            f"<div style='flex:1; min-width:120px;'>"
+            f"<div style='font-size:0.72rem; color:rgba(255,255,255,0.35); margin-bottom:4px;'>Obsazenost {today.month}/{today.year} — {obsazeno_dni} dní ({obsazenost_pct:.0f}%)</div>"
+            f"<div style='display:flex; align-items:center; gap:0.5rem;'>"
+            f"<span style='font-size:0.78rem; color:{occ_color};'>▐</span>"
+            f"{occ_bar}"
+            f"</div></div>"
+            f"</div>"
+            + splaceni_html +
+            f"</div>"
+        )
+        st.markdown(card_html, unsafe_allow_html=True)
+
+    # ── Upozornění ────────────────────────────────────────────────────
+    if alerts:
+        st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+        for spz in alerts:
+            st.warning(f"Auto **{spz}** nemá tento měsíc žádného řidiče.")
+    else:
+        st.markdown(
+            "<div style='color:#10b981; font-size:0.85rem; margin-top:0.5rem;'>"
+            "✓ Všechna aktivní auta mají přiřazeného řidiče.</div>",
+            unsafe_allow_html=True
+        )
+
+    # ── Obsazenost — bar chart ─────────────────────────────────────────
+    visible_cars = [c for c in all_cars if c.status != 'retired']
+    if visible_cars:
+        st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+        occ_values = [occupancy.get(c.id, 0) for c in visible_cars]
+        occ_colors = [
+            "#10b981" if (occupancy.get(c.id, 0) / days_in_month) >= 0.7
+            else ("#f59e0b" if (occupancy.get(c.id, 0) / days_in_month) >= 0.3 else "#ef4444")
+            for c in visible_cars
+        ]
+        fig_occ = go.Figure(go.Bar(
+            x=[c.spz for c in visible_cars],
+            y=occ_values,
+            marker_color=occ_colors,
+            hovertemplate="<b>%{x}</b><br>Obsazeno: %{y} dní<extra></extra>",
+        ))
+        fig_occ.add_hline(
+            y=days_in_month,
+            line_dash="dot",
+            line_color="rgba(255,255,255,0.25)",
+            annotation_text=f"{days_in_month} dní v měsíci",
+            annotation_font_color="rgba(255,255,255,0.4)",
+            annotation_position="top right",
+        )
+        fig_occ.update_layout(
+            **PLOTLY_LAYOUT,
+            height=220,
+            showlegend=False,
+            title=dict(
+                text=f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year}",
+                font=dict(color="rgba(255,255,255,0.5)", size=13), x=0,
+            ),
+            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], title="Dní"),
+        )
+        st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False})
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -333,29 +412,25 @@ def _render_driver_overview():
 
     all_cars = get_all_cars()
 
-    # Souhrnné metriky
     active = [d for d in all_drivers if d.status == 'active']
-    col1, col2, col3 = st.columns(3)
-    col1.metric("👥 Aktivní řidiči", len(active))
-    col2.metric("📋 Celkem řidičů", len(all_drivers))
-
     total_kauce_zbyvajici = sum(
         max(0, (d.kauce_celkem or 0) - (d.kauce_zaplaceno or 0))
         for d in all_drivers
     )
-    col3.metric("💰 Nezaplacené kauce celkem", f"{total_kauce_zbyvajici:,.0f} Kč")
 
-    st.markdown("---")
-    st.markdown("#### Přehled řidičů")
+    # ── KPI ───────────────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3)
+    c1.markdown(_kpi_card("Aktivní řidiči", str(len(active)), f"Celkem: {len(all_drivers)}", "#10b981", "👤"), unsafe_allow_html=True)
+    c2.markdown(_kpi_card("Celkem řidičů", str(len(all_drivers)), "", "#f5c518", "👥"), unsafe_allow_html=True)
+    c3.markdown(_kpi_card("Nezaplacené kauce", f"{total_kauce_zbyvajici:,.0f} Kč", "Zbývá vybrat", "#f59e0b", "💰"), unsafe_allow_html=True)
 
-    # Záhlaví
+    st.markdown("<div style='height:1.2rem;'></div>", unsafe_allow_html=True)
+
+    # ── Záhlaví tabulky ───────────────────────────────────────────────
     header_cols = st.columns([3, 1.5, 3, 3, 2])
-    header_cols[0].markdown("**Řidič**")
-    header_cols[1].markdown("**Status**")
-    header_cols[2].markdown("**Kauce**")
-    header_cols[3].markdown("**Pokuty**")
-    header_cols[4].markdown("**Auto**")
-    st.markdown("<hr style='margin:0.3rem 0; opacity:0.2;'>", unsafe_allow_html=True)
+    for col, text in zip(header_cols, ["Řidič", "Status", "Kauce", "Pokuty", "Auto"]):
+        col.markdown(f"<span style='font-size:0.78rem; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.07em;'>{text}</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin:0.3rem 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
 
     for driver in all_drivers:
         stats = get_driver_stats(driver.id) or {}
@@ -367,10 +442,8 @@ def _render_driver_overview():
         kauce_zbyvajici = stats.get('kauce_zbyvajici', 0)
 
         status_color = {
-            'active': '#10b981',
-            'inactive': '#f59e0b',
-            'archived': '#6b7280',
-            'nabor': '#f5c518',
+            'active': '#10b981', 'inactive': '#f59e0b',
+            'archived': '#6b7280', 'nabor': '#f5c518',
         }.get(driver.status, '#6b7280')
 
         kauce_bar_color = '#10b981' if kauce_procento >= 100 else '#f59e0b'
@@ -382,29 +455,28 @@ def _render_driver_overview():
             initials = ''.join(n[0].upper() for n in driver.jmeno.split() if n)
             st.markdown(
                 f"<div style='display:flex; align-items:center; gap:0.6rem;'>"
-                f"<div style='width:32px; height:32px; border-radius:50%; "
+                f"<div style='width:30px; height:30px; border-radius:50%; "
                 f"background:linear-gradient(135deg,#f5c518,#d4a017); "
                 f"display:flex; align-items:center; justify-content:center; "
-                f"font-weight:700; font-size:0.82rem; color:#0a0a0a; flex-shrink:0;'>{initials}</div>"
-                f"<strong>{driver.jmeno}</strong>"
+                f"font-weight:700; font-size:0.78rem; color:#0a0a0a; flex-shrink:0;'>{initials}</div>"
+                f"<strong style='font-size:0.9rem;'>{driver.jmeno}</strong>"
                 f"</div>",
                 unsafe_allow_html=True
             )
 
         with col2:
             st.markdown(
-                f"<span style='color:{status_color}; font-size:0.85rem;'>{driver.status}</span>",
+                f"<span style='color:{status_color}; font-size:0.82rem;'>{driver.status}</span>",
                 unsafe_allow_html=True
             )
 
         with col3:
             st.markdown(
                 f"<div style='font-size:0.82rem;'>{kauce_zaplaceno:,.0f} / {kauce_celkem:,.0f} Kč</div>"
-                f"<div style='background:rgba(255,255,255,0.1); border-radius:4px; height:6px; margin-top:3px;'>"
+                f"<div style='background:rgba(255,255,255,0.08); border-radius:4px; height:5px; margin:4px 0;'>"
                 f"<div style='width:{min(kauce_procento,100):.0f}%; height:100%; "
                 f"background:{kauce_bar_color}; border-radius:4px;'></div></div>"
-                f"<div style='font-size:0.75rem; color:rgba(255,255,255,0.4);'>"
-                f"zbývá {kauce_zbyvajici:,.0f} Kč</div>",
+                f"<div style='font-size:0.72rem; color:rgba(255,255,255,0.35);'>zbývá {kauce_zbyvajici:,.0f} Kč</div>",
                 unsafe_allow_html=True
             )
 
@@ -413,281 +485,129 @@ def _render_driver_overview():
                 zb = fines['zbyvajici']
                 fc = '#ef4444' if zb > 0 else '#10b981'
                 st.markdown(
-                    f"<span style='font-size:0.85rem;'>{fines['pocet']} pokut &nbsp;|&nbsp; "
+                    f"<span style='font-size:0.82rem;'>{fines['pocet']}× &nbsp;"
                     f"<span style='color:{fc};'>zbývá {zb:,.0f} Kč</span></span>",
                     unsafe_allow_html=True
                 )
             else:
-                st.markdown(
-                    "<span style='color:rgba(255,255,255,0.3); font-size:0.85rem;'>—</span>",
-                    unsafe_allow_html=True
-                )
+                st.markdown("<span style='color:rgba(255,255,255,0.25); font-size:0.82rem;'>—</span>", unsafe_allow_html=True)
 
         with col5:
             if default_car:
-                st.markdown(f"🚗 {default_car.spz}")
+                st.markdown(f"<span style='font-size:0.88rem;'>🚗 {default_car.spz}</span>", unsafe_allow_html=True)
             else:
-                st.markdown(
-                    "<span style='color:rgba(255,255,255,0.3);'>—</span>",
-                    unsafe_allow_html=True
-                )
+                st.markdown("<span style='color:rgba(255,255,255,0.25);'>—</span>", unsafe_allow_html=True)
 
-        st.markdown("<hr style='margin:0.25rem 0; opacity:0.08;'>", unsafe_allow_html=True)
-
-    # Kauce progress bary
-    st.markdown("---")
-    st.markdown("#### 💰 Průběh kauce řidičů")
-    for driver in all_drivers:
-        stats = get_driver_stats(driver.id) or {}
-        kauce_celkem = stats.get('kauce_celkem', 0)
-        kauce_zaplaceno = stats.get('kauce_zaplaceno', 0)
-        kauce_procento = stats.get('kauce_procento', 0) if kauce_celkem > 0 else 0
-        bar_color = '#10b981' if kauce_procento >= 100 else '#f59e0b'
-
-        col_name, col_bar, col_pct = st.columns([2, 5, 1])
-        with col_name:
-            st.markdown(f"**{driver.jmeno}**")
-        with col_bar:
-            st.markdown(
-                f"<div style='background:rgba(255,255,255,0.1); border-radius:8px; height:14px; margin-top:0.4rem;'>"
-                f"<div style='width:{min(kauce_procento,100):.1f}%; height:100%; "
-                f"background:{bar_color}; border-radius:8px;'></div></div>"
-                f"<div style='font-size:0.75rem; color:rgba(255,255,255,0.4); margin-top:2px;'>"
-                f"{kauce_zaplaceno:,.0f} / {kauce_celkem:,.0f} Kč</div>",
-                unsafe_allow_html=True
-            )
-        with col_pct:
-            st.markdown(
-                f"<div style='text-align:right; margin-top:0.3rem; font-weight:700; color:{bar_color};'>"
-                f"{kauce_procento:.0f}%</div>",
-                unsafe_allow_html=True
-            )
+        st.markdown("<hr style='margin:0.2rem 0; border-color:rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════
-# TAB 4: VÝNOSNOST & OBSAZENOST
+# TAB 4: EXPIRACE & NÁBOR
 # ══════════════════════════════════════════════════════════════════
 
-def _render_profitability():
-    today = date.today()
-    all_cars = get_all_cars()
-    if not all_cars:
-        st.info("Žádná auta v databázi.")
-        return
-
-    days_in_month = cal_mod.monthrange(today.year, today.month)[1]
-    occupancy = get_fleet_occupancy_month(today.year, today.month)
-
-    # ── Prognóza příjmů ───────────────────────────────────────────────
-    st.markdown("#### 📈 Prognóza měsíčních příjmů")
-
-    active_cars = [c for c in all_cars if c.status == 'active']
-    ocekavane = sum((c.cena_tyden_pronajem or 0) * 4.33 for c in active_cars)
-    naklady_flotily = sum((c.splatka_tyden or 0) * 4.33 for c in all_cars)
-    ocekavany_zisk = ocekavane - naklady_flotily
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric(
-        "💵 Očekávané příjmy (měsíc)",
-        f"{ocekavane:,.0f} Kč",
-        help="Součet cena_tyden_pronajem × 4,33 pro všechna aktivní auta"
-    )
-    c2.metric(
-        "💸 Náklady flotily (měsíc)",
-        f"{naklady_flotily:,.0f} Kč",
-        help="Splátky/nájmy aut × 4,33"
-    )
-    profit_color = "normal" if ocekavany_zisk >= 0 else "inverse"
-    c3.metric(
-        "💰 Očekávaný zisk",
-        f"{ocekavany_zisk:,.0f} Kč",
-        delta_color=profit_color
-    )
-
-    st.markdown("---")
-
-    # ── Výnosnost a obsazenost každého auta ──────────────────────────
-    st.markdown("#### 🚗 Výnosnost každého auta (odhadovaná za měsíc)")
-
-    rows = []
-    alerts = []
-
-    for car in all_cars:
-        service_cost = get_total_service_cost(car.id)
-        prijmy_mesic = (car.cena_tyden_pronajem or 0) * 4.33
-        naklady_splatka = (car.splatka_tyden or 0) * 4.33
-        # Průměrné měsíční náklady na servis (celkové / počet měsíců od pořízení, min 1)
-        naklady_servis = service_cost / 12  # průměr za rok (konzervativní odhad)
-        naklady_celkem = naklady_splatka + naklady_servis
-        zisk = prijmy_mesic - naklady_celkem
-
-        # Obsazenost v aktuálním měsíci
-        obsazeno_dni = occupancy.get(car.id, 0)
-        obsazenost_pct = obsazeno_dni / days_in_month * 100 if days_in_month > 0 else 0
-
-        # Detekce volných aut (méně než 3 dny obsazení v posledních 7 dnech)
-        if car.status == 'active' and obsazeno_dni == 0:
-            alerts.append(f"🔴 **{car.spz}** nemá žádného řidiče tento měsíc ({today.strftime('%B')})")
-
-        status_emoji = {'active': '✅', 'service': '🔧', 'retired': '🗄️'}.get(car.status, '❓')
-        zisk_str = f"+{zisk:,.0f} Kč" if zisk >= 0 else f"{zisk:,.0f} Kč"
-
-        rows.append({
-            'Auto': f"{status_emoji} {car.spz}",
-            'Model': car.model,
-            'Příjmy/měs (est.)': f"{prijmy_mesic:,.0f} Kč",
-            'Splátka/měs': f"{naklady_splatka:,.0f} Kč",
-            'Servis/měs (avg)': f"{naklady_servis:,.0f} Kč",
-            'Náklady celkem': f"{naklady_celkem:,.0f} Kč",
-            'Zisk/měs (est.)': zisk_str,
-            f'Obsazenost ({today.month}/{today.year})': f"{obsazeno_dni} dní ({obsazenost_pct:.0f}%)",
-        })
-
-    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-
-    st.markdown(
-        "<div style='font-size:0.78rem; color:rgba(255,255,255,0.4); margin-top:0.3rem;'>"
-        "Příjmy = cena pronájmu řidiči × 4,33 týdne &nbsp;|&nbsp; "
-        "Servis/měs = celkové náklady na servis ÷ 12 (roční průměr)"
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-    # ── Upozornění na volná auta ──────────────────────────────────────
-    if alerts:
-        st.markdown("---")
-        st.markdown("#### ⚠️ Volná auta")
-        for a in alerts:
-            st.warning(a)
-    else:
-        st.markdown(
-            "<div style='color:#10b981; font-size:0.85rem; margin-top:0.5rem;'>"
-            "✅ Všechna aktivní auta mají přiřazeného řidiče tento měsíc.</div>",
-            unsafe_allow_html=True
-        )
-
-    # ── Obsazenost — sloupcový graf ───────────────────────────────────
-    st.markdown("---")
-    st.markdown(f"#### 📅 Obsazenost flotily — {MESICE_CZ[today.month-1]} {today.year}")
-
-    chart_data = {car.spz: occupancy.get(car.id, 0) for car in all_cars if car.status != 'retired'}
-    if chart_data:
-        occ_df = pd.DataFrame(
-            {'Obsazené dny': list(chart_data.values())},
-            index=list(chart_data.keys())
-        )
-        st.bar_chart(occ_df, color=['#10b981'])
-        st.markdown(
-            f"<div style='font-size:0.78rem; color:rgba(255,255,255,0.4);'>"
-            f"Celkem dní v měsíci: {days_in_month}</div>",
-            unsafe_allow_html=True
-        )
-
-
-# ══════════════════════════════════════════════════════════════════
-# TAB 5: NÁBOR & EXPIRACE
-# ══════════════════════════════════════════════════════════════════
-
-def _render_nabor_expirace():
+def _render_expirace_nabor():
     today = date.today()
     all_drivers = get_all_drivers()
     all_cars = get_all_cars()
 
-    # ── Nábor pipeline ────────────────────────────────────────────────
-    st.markdown("#### 👤 Nábor — pipeline")
+    # ── Expirace ──────────────────────────────────────────────────────
+    st.markdown(
+        "<div style='font-size:0.88rem; font-weight:600; color:rgba(255,255,255,0.5); "
+        "text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.8rem;'>STK & Pojistka</div>",
+        unsafe_allow_html=True
+    )
 
-    nabor_drivers = [d for d in all_drivers if d.status == 'nabor']
-
-    if not nabor_drivers:
-        st.info("Žádní řidiči ve stavu Nábor.")
-    else:
-        for driver in nabor_drivers:
-            # Checklist kritérií
-            kauce_zapl = driver.kauce_zaplaceno or 0
-            kauce_cel = driver.kauce_celkem or 10000
-            kauce_ok = kauce_zapl >= kauce_cel
-            kauce_label = f"Kauce {kauce_zapl:,.0f}/{kauce_cel:,.0f} Kč".replace(",", " ")
-            auto_ok = driver.default_car_id is not None
-            op_ok = bool(driver.nabor_op)
-            ridicak_ok = bool(driver.nabor_ridicak)
-            taxi_ok = bool(driver.nabor_taxi)
-
-            checks = [
-                ("Kopie OP", op_ok),
-                ("Kopie ŘP", ridicak_ok),
-                ("Taxi licence", taxi_ok),
-                (kauce_label, kauce_ok),
-                ("Auto přiřazeno", auto_ok),
-            ]
-
-            done_count = sum(1 for _, ok in checks if ok)
-            all_done = done_count == len(checks)
-            progress_color = '#10b981' if all_done else ('#f5c518' if done_count >= 3 else '#ef4444')
-
-            checks_html = " &nbsp;".join(
-                f"<span style='color:{'#10b981' if ok else '#ef4444'};'>{'✅' if ok else '❌'} {label}</span>"
-                for label, ok in checks
-            )
-
-            st.markdown(
-                f"<div style='background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); "
-                f"border-left:3px solid {progress_color}; border-radius:10px; "
-                f"padding:0.8rem 1rem; margin-bottom:0.5rem;'>"
-                f"<div style='display:flex; justify-content:space-between; align-items:center;'>"
-                f"<strong style='color:white;'>{driver.jmeno}</strong>"
-                f"<span style='color:{progress_color}; font-weight:700;'>{done_count}/{len(checks)} hotovo</span>"
-                f"</div>"
-                f"<div style='font-size:0.82rem; margin-top:0.5rem;'>{checks_html}</div>"
-                + (f"<div style='color:#10b981; font-size:0.8rem; margin-top:0.4rem;'>🎉 Připraven k aktivaci!</div>" if all_done else "")
-                + "</div>",
-                unsafe_allow_html=True
-            )
-
-    st.markdown("---")
-
-    # ── Přehled expirací ──────────────────────────────────────────────
-    st.markdown("#### 📅 Přehled expirací (STK, pojistka)")
+    def _urgency(d):
+        if not d:
+            return 9999, "—", "rgba(255,255,255,0.25)"
+        days = (d - today).days
+        if days < 0:
+            return days, f"⛔ {d.strftime('%d.%m.%Y')} (prošlé!)", "#ef4444"
+        elif days <= 30:
+            return days, f"🔴 {d.strftime('%d.%m.%Y')} (za {days} dní)", "#ef4444"
+        elif days <= 90:
+            return days, f"🟡 {d.strftime('%d.%m.%Y')} (za {days} dní)", "#f59e0b"
+        else:
+            return days, f"🟢 {d.strftime('%d.%m.%Y')} (za {days} dní)", "#10b981"
 
     exp_rows = []
     for car in all_cars:
         if car.status == 'retired':
             continue
-
-        def _exp_cell(d):
-            if not d:
-                return "—", 9999
-            days = (d - today).days
-            if days < 0:
-                return f"⛔ {d.strftime('%d.%m.%Y')} (prošlé!)", days
-            elif days <= 30:
-                return f"🔴 {d.strftime('%d.%m.%Y')} (za {days} dní)", days
-            elif days <= 90:
-                return f"🟡 {d.strftime('%d.%m.%Y')} (za {days} dní)", days
-            else:
-                return f"🟢 {d.strftime('%d.%m.%Y')} (za {days} dní)", days
-
-        stk_str, stk_days = _exp_cell(car.stk_datum)
-        poj_str, poj_days = _exp_cell(car.pojistka_datum)
+        stk_days, stk_str, stk_color = _urgency(car.stk_datum)
+        poj_days, poj_str, poj_color = _urgency(car.pojistka_datum)
         urgency = min(stk_days, poj_days)
-
         status_emoji = {'active': '✅', 'service': '🔧'}.get(car.status, '❓')
-        exp_rows.append((urgency, {
-            'Auto': f"{status_emoji} {car.spz}",
-            'Model': f"{car.model} ({car.rok})",
-            'STK': stk_str,
-            'Pojistka': poj_str,
-        }))
+        exp_rows.append((urgency, car.spz, car.model, car.rok, status_emoji, stk_str, stk_color, poj_str, poj_color))
 
     if exp_rows:
-        # Seřadit od nejnaléhavějších
         exp_rows.sort(key=lambda x: x[0])
-        df_exp = pd.DataFrame([r for _, r in exp_rows])
-        st.dataframe(df_exp, width="stretch", hide_index=True)
+
+        # Záhlaví
+        h1, h2, h3, h4 = st.columns([2, 2, 3, 3])
+        for col, txt in zip([h1, h2, h3, h4], ["Auto", "Model", "STK", "Pojistka"]):
+            col.markdown(f"<span style='font-size:0.75rem; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.07em;'>{txt}</span>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:0.3rem 0; border-color:rgba(255,255,255,0.08);'>", unsafe_allow_html=True)
+
+        for _, spz, model, rok, status_emoji, stk_str, stk_color, poj_str, poj_color in exp_rows:
+            c1, c2, c3, c4 = st.columns([2, 2, 3, 3])
+            c1.markdown(f"<strong>{status_emoji} {spz}</strong>", unsafe_allow_html=True)
+            c2.markdown(f"<span style='color:rgba(255,255,255,0.6); font-size:0.88rem;'>{model} ({rok})</span>", unsafe_allow_html=True)
+            c3.markdown(f"<span style='color:{stk_color}; font-size:0.88rem;'>{stk_str}</span>", unsafe_allow_html=True)
+            c4.markdown(f"<span style='color:{poj_color}; font-size:0.88rem;'>{poj_str}</span>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin:0.2rem 0; border-color:rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
+    else:
+        st.info("Žádná aktivní auta.")
+
+    st.markdown("<div style='height:1.5rem;'></div>", unsafe_allow_html=True)
+
+    # ── Nábor pipeline ────────────────────────────────────────────────
+    st.markdown(
+        "<div style='font-size:0.88rem; font-weight:600; color:rgba(255,255,255,0.5); "
+        "text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.8rem;'>Nábor — pipeline</div>",
+        unsafe_allow_html=True
+    )
+
+    nabor_drivers = [d for d in all_drivers if d.status == 'nabor']
+
+    if not nabor_drivers:
+        st.info("Žádní řidiči ve stavu Nábor.")
+        return
+
+    for driver in nabor_drivers:
+        kauce_zapl = driver.kauce_zaplaceno or 0
+        kauce_cel = driver.kauce_celkem or 10000
+        kauce_ok = kauce_zapl >= kauce_cel
+        kauce_label = f"Kauce {kauce_zapl:,.0f}/{kauce_cel:,.0f} Kč".replace(",", " ")
+        auto_ok = driver.default_car_id is not None
+
+        checks = [
+            ("Kopie OP", bool(driver.nabor_op)),
+            ("Kopie ŘP", bool(driver.nabor_ridicak)),
+            ("Taxi licence", bool(driver.nabor_taxi)),
+            (kauce_label, kauce_ok),
+            ("Auto přiřazeno", auto_ok),
+        ]
+        done_count = sum(1 for _, ok in checks if ok)
+        all_done = done_count == len(checks)
+        progress_color = '#10b981' if all_done else ('#f5c518' if done_count >= 3 else '#ef4444')
+
+        checks_html = " &nbsp; ".join(
+            f"<span style='color:{'#10b981' if ok else 'rgba(255,255,255,0.3)'};'>"
+            f"{'✓' if ok else '○'} {label}</span>"
+            for label, ok in checks
+        )
+
         st.markdown(
-            "<div style='font-size:0.78rem; color:rgba(255,255,255,0.4); margin-top:0.3rem;'>"
-            "Datumy expirací zadáš v detailu každého auta (Upravit auto)."
-            "</div>",
+            f"<div style='background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); "
+            f"border-left:3px solid {progress_color}; border-radius:10px; "
+            f"padding:0.8rem 1rem; margin-bottom:0.5rem;'>"
+            f"<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;'>"
+            f"<strong style='color:white;'>{driver.jmeno}</strong>"
+            f"<span style='color:{progress_color}; font-size:0.82rem;'>{done_count}/{len(checks)}</span>"
+            f"</div>"
+            f"<div style='font-size:0.82rem;'>{checks_html}</div>"
+            + (f"<div style='color:#10b981; font-size:0.78rem; margin-top:0.4rem;'>Připraven k aktivaci</div>" if all_done else "")
+            + "</div>",
             unsafe_allow_html=True
         )
-    else:
-        st.info("Žádná auta ke zobrazení.")
