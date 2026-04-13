@@ -26,21 +26,17 @@ MESICE_CZ = [
     'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
 ]
 
-PLOTLY_LAYOUT = dict(
+_AXIS = dict(
+    gridcolor="rgba(255,255,255,0.06)",
+    zerolinecolor="rgba(255,255,255,0.1)",
+    tickfont=dict(size=12),
+)
+
+_PLOTLY_BASE = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(color="rgba(255,255,255,0.7)", family="Rajdhani, sans-serif"),
     margin=dict(l=10, r=10, t=10, b=40),
-    xaxis=dict(
-        gridcolor="rgba(255,255,255,0.06)",
-        zerolinecolor="rgba(255,255,255,0.1)",
-        tickfont=dict(size=12),
-    ),
-    yaxis=dict(
-        gridcolor="rgba(255,255,255,0.06)",
-        zerolinecolor="rgba(255,255,255,0.1)",
-        tickfont=dict(size=12),
-    ),
     legend=dict(
         bgcolor="rgba(0,0,0,0)",
         bordercolor="rgba(255,255,255,0.1)",
@@ -57,6 +53,15 @@ PLOTLY_LAYOUT = dict(
         font=dict(color="white", size=13),
     ),
 )
+
+
+def _layout(**overrides) -> dict:
+    """Merge base Plotly layout with per-chart overrides (avoids duplicate key errors)."""
+    result = dict(_PLOTLY_BASE)
+    result["xaxis"] = dict(_AXIS)
+    result["yaxis"] = dict(_AXIS)
+    result.update(overrides)
+    return result
 
 
 def _month_label(m: dict) -> str:
@@ -183,12 +188,11 @@ def _render_financial_overview():
             marker_color="#ef4444",
             hovertemplate="<b>%{x}</b><br>Výdaje: %{y:,.0f} Kč<extra></extra>",
         ))
-        fig_bar.update_layout(
-            **PLOTLY_LAYOUT,
+        fig_bar.update_layout(**_layout(
             barmode="group",
             height=280,
-            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], ticksuffix=" Kč"),
-        )
+            yaxis=dict(**_AXIS, ticksuffix=" Kč"),
+        ))
         st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
     if len(monthly_data) > 1 and has_data:
@@ -205,13 +209,12 @@ def _render_financial_overview():
             hovertemplate="<b>%{x}</b><br>Bilance: %{y:,.0f} Kč<extra></extra>",
         ))
         fig_line.add_hline(y=0, line_color="rgba(255,255,255,0.2)", line_width=1)
-        fig_line.update_layout(
-            **PLOTLY_LAYOUT,
+        fig_line.update_layout(**_layout(
             height=220,
             showlegend=False,
-            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], ticksuffix=" Kč"),
+            yaxis=dict(**_AXIS, ticksuffix=" Kč"),
             title=dict(text="Bilance / Zisk", font=dict(color="rgba(255,255,255,0.5)", size=13), x=0),
-        )
+        ))
         st.plotly_chart(fig_line, use_container_width=True, config={"displayModeBar": False})
 
     # ── Tabulka ───────────────────────────────────────────────────────
@@ -387,16 +390,15 @@ def _render_auta():
             annotation_font_color="rgba(255,255,255,0.4)",
             annotation_position="top right",
         )
-        fig_occ.update_layout(
-            **PLOTLY_LAYOUT,
+        fig_occ.update_layout(**_layout(
             height=220,
             showlegend=False,
             title=dict(
                 text=f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year}",
                 font=dict(color="rgba(255,255,255,0.5)", size=13), x=0,
             ),
-            yaxis=dict(**PLOTLY_LAYOUT["yaxis"], title="Dní"),
-        )
+            yaxis=dict(**_AXIS, title="Dní"),
+        ))
         st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False})
 
 
