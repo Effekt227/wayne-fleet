@@ -26,42 +26,34 @@ MESICE_CZ = [
     'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
 ]
 
-_AXIS = dict(
-    gridcolor="rgba(255,255,255,0.06)",
-    zerolinecolor="rgba(255,255,255,0.1)",
-    tickfont=dict(size=12),
-)
-
-_PLOTLY_BASE = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="rgba(255,255,255,0.7)", family="Rajdhani, sans-serif"),
-    margin=dict(l=10, r=10, t=10, b=40),
-    legend=dict(
-        bgcolor="rgba(0,0,0,0)",
-        bordercolor="rgba(255,255,255,0.1)",
-        borderwidth=1,
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="left",
-        x=0,
-    ),
-    hoverlabel=dict(
-        bgcolor="rgba(20,20,20,0.95)",
-        bordercolor="rgba(245,197,24,0.4)",
-        font=dict(color="white", size=13),
-    ),
-)
-
-
-def _layout(**overrides) -> dict:
-    """Merge base Plotly layout with per-chart overrides (avoids duplicate key errors)."""
-    result = dict(_PLOTLY_BASE)
-    result["xaxis"] = dict(_AXIS)
-    result["yaxis"] = dict(_AXIS)
-    result.update(overrides)
-    return result
+def _base_layout():
+    """Returns a fresh Plotly layout dict with the app's dark theme."""
+    return {
+        "paper_bgcolor": "rgba(0,0,0,0)",
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "font": {"color": "rgba(255,255,255,0.7)", "family": "Rajdhani, sans-serif"},
+        "margin": {"l": 10, "r": 10, "t": 10, "b": 40},
+        "xaxis": {
+            "gridcolor": "rgba(255,255,255,0.06)",
+            "zerolinecolor": "rgba(255,255,255,0.1)",
+            "tickfont": {"size": 12},
+        },
+        "yaxis": {
+            "gridcolor": "rgba(255,255,255,0.06)",
+            "zerolinecolor": "rgba(255,255,255,0.1)",
+            "tickfont": {"size": 12},
+        },
+        "legend": {
+            "bgcolor": "rgba(0,0,0,0)",
+            "bordercolor": "rgba(255,255,255,0.1)",
+            "borderwidth": 1,
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "left",
+            "x": 0,
+        },
+    }
 
 
 def _month_label(m: dict) -> str:
@@ -188,11 +180,11 @@ def _render_financial_overview():
             marker_color="#ef4444",
             hovertemplate="<b>%{x}</b><br>Výdaje: %{y:,.0f} Kč<extra></extra>",
         ))
-        fig_bar.update_layout(**_layout(
-            barmode="group",
-            height=280,
-            yaxis=dict(**_AXIS, ticksuffix=" Kč"),
-        ))
+        lay = _base_layout()
+        lay["barmode"] = "group"
+        lay["height"] = 280
+        lay["yaxis"]["ticksuffix"] = " Kč"
+        fig_bar.update_layout(lay)
         st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
 
     if len(monthly_data) > 1 and has_data:
@@ -209,12 +201,12 @@ def _render_financial_overview():
             hovertemplate="<b>%{x}</b><br>Bilance: %{y:,.0f} Kč<extra></extra>",
         ))
         fig_line.add_hline(y=0, line_color="rgba(255,255,255,0.2)", line_width=1)
-        fig_line.update_layout(**_layout(
-            height=220,
-            showlegend=False,
-            yaxis=dict(**_AXIS, ticksuffix=" Kč"),
-            title=dict(text="Bilance / Zisk", font=dict(color="rgba(255,255,255,0.5)", size=13), x=0),
-        ))
+        lay2 = _base_layout()
+        lay2["height"] = 220
+        lay2["showlegend"] = False
+        lay2["yaxis"]["ticksuffix"] = " Kč"
+        lay2["title"] = {"text": "Bilance / Zisk", "font": {"color": "rgba(255,255,255,0.5)", "size": 13}, "x": 0}
+        fig_line.update_layout(lay2)
         st.plotly_chart(fig_line, use_container_width=True, config={"displayModeBar": False})
 
     # ── Tabulka ───────────────────────────────────────────────────────
@@ -390,15 +382,12 @@ def _render_auta():
             annotation_font_color="rgba(255,255,255,0.4)",
             annotation_position="top right",
         )
-        fig_occ.update_layout(**_layout(
-            height=220,
-            showlegend=False,
-            title=dict(
-                text=f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year}",
-                font=dict(color="rgba(255,255,255,0.5)", size=13), x=0,
-            ),
-            yaxis=dict(**_AXIS, title="Dní"),
-        ))
+        lay3 = _base_layout()
+        lay3["height"] = 220
+        lay3["showlegend"] = False
+        lay3["title"] = {"text": f"Obsazenost aut — {MESICE_CZ[today.month-1]} {today.year}", "font": {"color": "rgba(255,255,255,0.5)", "size": 13}, "x": 0}
+        lay3["yaxis"]["title"] = "Dní"
+        fig_occ.update_layout(lay3)
         st.plotly_chart(fig_occ, use_container_width=True, config={"displayModeBar": False})
 
 
