@@ -67,108 +67,137 @@ def render_stats_page():
 # TAB 1: FINANCE
 # ══════════════════════════════════════════════════════════════════
 
+def _last_n_months(n: int):
+    """Vrátí seznam (rok, mesic) pro posledních n měsíců včetně aktuálního."""
+    today = date.today()
+    result = []
+    y, m = today.year, today.month
+    for _ in range(n):
+        result.append((y, m))
+        m -= 1
+        if m == 0:
+            m = 12
+            y -= 1
+    return list(reversed(result))
+
+
 def _render_financial_overview():
     today = date.today()
 
-    # ── Filtr ────────────────────────────────────────────────────────
-    col_f, col_spacer = st.columns([3, 5])
-    with col_f:
-        mode = st.segmented_control(
-            "Období",
-            options=["Tento měsíc", "Posledních 6M", f"Rok {today.year}"],
-            default="Posledních 6M",
-            key="stats_mode",
-            label_visibility="collapsed",
-        )
+    # Načteme data pro posledních 6 měsíců
+    mesice = _last_n_months(6)
+    monthly_data = []
+    for y, m in mesice:
+        s = get_monthly_summary(y, m)
+        s['rok'] = y
+        s['mesic'] = m
+        monthly_data.append(s)
 
-    if mode == "Tento měsíc":
-        s = get_monthly_summary(today.year, today.month)
-        s['rok'] = today.year
-        s['mesic'] = today.month
-        s['label'] = f"{today.year}-{today.month:02d}"
-        monthly_data = [s]
-    elif mode == f"Rok {today.year}":
-        monthly_data = get_monthly_chart_data_range(today.year, 1, today.year, 12)
-    else:  # Posledních 6M
-        start = today - timedelta(days=180)
-        monthly_data = get_monthly_chart_data_range(
-            start.year, start.month, today.year, today.month
-        )
-        # Omezit pouze na minulé/aktuální měsíce (bez nulových budoucích)
-        monthly_data = [
-            m for m in monthly_data
-            if (m['rok'], m['mesic']) <= (today.year, today.month)
-        ]
+    current = monthly_data[-1]
+    prijmy_m    = current.get('vydano_celkem', 0)
+    vydaje_m    = current.get('prijato_celkem', 0)
+    bilance_m   = current.get('bilance', 0)
+    pohledavky  = current.get('vydano_nezaplaceno', 0)
+    zavazky     = current.get('prijato_nezaplaceno', 0)
 
-    if not monthly_data:
-        st.info("Žádná data pro vybrané období.")
-        return
+    mesic_label = f"{MESICE_CZ[today.month - 1]} {today.year}"
 
-    # ── KPI karty ────────────────────────────────────────────────────
-    this_month = next(
-        (m for m in monthly_data if m['rok'] == today.year and m['mesic'] == today.month), {}
+    # ── Spotlight: aktuální měsíc ─────────────────────────────────────
+    b_color = "#10b981" if bilance_m >= 0 else "#ef4444"
+    b_icon  = "▲" if bilance_m >= 0 else "▼"
+    b_text  = "Vydělali jste" if bilance_m >= 0 else "Prodělali jste"
+
+    st.markdown(
+        f"<div style='background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); "
+        f"border-radius:12px; padding:1.2rem 1.5rem; margin-bottom:1.2rem;'>"
+        f"<div style='font-size:0.8rem; color:rgba(255,255,255,0.4); margin-bottom:0.6rem; "
+        f"text-transform:uppercase; letter-spacing:0.08em;'>Aktuální měsíc — {mesic_label}</div>"
+        f"<div style='display:flex; gap:2rem; flex-wrap:wrap;'>"
+        # Příjmy
+        f"<div>"
+        f"<div style='font-size:0.75rem; color:rgba(255,255,255,0.45);'>Příjmy (co přišlo)</div>"
+        f"<div style='font-size:1.8rem; font-weight:700; color:#10b981; line-height:1.1;'>{prijmy_m:,.0f} Kč</div>"
+        f"<div style='font-size:0.72rem; color:rgba(255,255,255,0.3);'>celkem za {mesic_label}</div>"
+        f"</div>"
+        # Výdaje
+        f"<div>"
+        f"<div style='font-size:0.75rem; color:rgba(255,255,255,0.45);'>Výdaje (co odešlo)</div>"
+        f"<div style='font-size:1.8rem; font-weight:700; color:#ef4444; line-height:1.1;'>{vydaje_m:,.0f} Kč</div>"
+        f"<div style='font-size:0.72rem; color:rgba(255,255,255,0.3);'>celkem za {mesic_label}</div>"
+        f"</div>"
+        # Výsledek
+        f"<div style='border-left:1px solid rgba(255,255,255,0.1); padding-left:2rem;'>"
+        f"<div style='font-size:0.75rem; color:rgba(255,255,255,0.45);'>{b_text}</div>"
+        f"<div style='font-size:1.8rem; font-weight:700; color:{b_color}; line-height:1.1;'>"
+        f"{b_icon} {abs(bilance_m):,.0f} Kč</div>"
+        f"<div style='font-size:0.72rem; color:rgba(255,255,255,0.3);'>zaplacené příjmy − zaplacené výdaje</div>"
+        f"</div>"
+        f"</div>"
+        # Pohledávky / závazky
+        + (
+            f"<div style='margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.07); "
+            f"display:flex; gap:2rem; flex-wrap:wrap;'>"
+            f"<div style='font-size:0.8rem; color:rgba(255,255,255,0.4);'>"
+            f"Ještě nepřišlo: <strong style='color:#f59e0b;'>{pohledavky:,.0f} Kč</strong></div>"
+            f"<div style='font-size:0.8rem; color:rgba(255,255,255,0.4);'>"
+            f"Ještě nezaplaceno: <strong style='color:#ef4444;'>{zavazky:,.0f} Kč</strong></div>"
+            f"</div>"
+            if pohledavky > 0 or zavazky > 0 else ""
+        ) +
+        f"</div>",
+        unsafe_allow_html=True,
     )
-    total_vydano = sum(m['vydano_celkem'] for m in monthly_data)
-    total_prijato = sum(m['prijato_celkem'] for m in monthly_data)
-    total_bilance = sum(m['bilance'] for m in monthly_data)
-    total_pohledavky = sum(m['vydano_nezaplaceno'] for m in monthly_data)
 
-    bilance_color = "#10b981" if total_bilance >= 0 else "#ef4444"
-    pohledavky_color = "#f59e0b" if total_pohledavky > 0 else "#10b981"
+    # ── Přehled posledních 6 měsíců ───────────────────────────────────
+    st.markdown(
+        "<div style='font-size:0.8rem; color:rgba(255,255,255,0.4); text-transform:uppercase; "
+        "letter-spacing:0.08em; margin-bottom:0.6rem;'>Posledních 6 měsíců</div>",
+        unsafe_allow_html=True,
+    )
 
-    is_multi = len(monthly_data) > 1
-    sub_vydano = f"Tento měsíc: {this_month.get('vydano_celkem', 0):,.0f} Kč" if is_multi and this_month else ""
-    sub_prijato = f"Tento měsíc: {this_month.get('prijato_celkem', 0):,.0f} Kč" if is_multi and this_month else ""
-    sub_bilance = f"Inkasováno (zaplaceno)" if is_multi else ""
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(_kpi_card("Příjmy celkem", f"{total_vydano:,.0f} Kč", sub_vydano, "#10b981", "↑"), unsafe_allow_html=True)
-    c2.markdown(_kpi_card("Výdaje celkem", f"{total_prijato:,.0f} Kč", sub_prijato, "#ef4444", "↓"), unsafe_allow_html=True)
-    c3.markdown(_kpi_card("Bilance", f"{total_bilance:,.0f} Kč", sub_bilance, bilance_color, "="), unsafe_allow_html=True)
-    c4.markdown(_kpi_card("Pohledávky", f"{total_pohledavky:,.0f} Kč", "Čekám na příjem", pohledavky_color, "⏳"), unsafe_allow_html=True)
-
-    st.markdown("<div style='height:1.5rem;'></div>", unsafe_allow_html=True)
-
-    # ── Grafy ─────────────────────────────────────────────────────────
-    has_data = any(m['vydano_celkem'] > 0 or m['prijato_celkem'] > 0 for m in monthly_data)
-    labels = [_month_label(m) for m in monthly_data]
-
-    if has_data:
-        chart_df = pd.DataFrame(
-            {
-                'Příjmy': [m['vydano_celkem'] for m in monthly_data],
-                'Výdaje': [m['prijato_celkem'] for m in monthly_data],
-            },
-            index=labels,
-        )
-        st.bar_chart(chart_df, color=['#10b981', '#ef4444'])
-
-    if len(monthly_data) > 1 and has_data:
-        st.markdown(
-            "<div style='font-size:0.82rem; color:rgba(255,255,255,0.45); margin:0.5rem 0 0.2rem;'>Bilance / Zisk</div>",
+    # Záhlaví
+    hcols = st.columns([2, 2, 2, 2])
+    for col, txt in zip(hcols, ["Měsíc", "Příjmy", "Výdaje", "Výsledek"]):
+        col.markdown(
+            f"<span style='font-size:0.72rem; color:rgba(255,255,255,0.35); "
+            f"text-transform:uppercase; letter-spacing:0.06em;'>{txt}</span>",
             unsafe_allow_html=True,
         )
-        profit_df = pd.DataFrame(
-            {'Bilance': [m['bilance'] for m in monthly_data]},
-            index=labels,
-        )
-        st.line_chart(profit_df, color=['#f5c518'])
+    st.markdown("<hr style='margin:0.3rem 0; border-color:rgba(255,255,255,0.07);'>", unsafe_allow_html=True)
 
-    # ── Tabulka ───────────────────────────────────────────────────────
-    st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
-    rows = []
-    for m in monthly_data:
+    for m in reversed(monthly_data):
         je_aktualni = m['rok'] == today.year and m['mesic'] == today.month
-        znacka = " ◀" if je_aktualni else ""
-        bilance_val = m['bilance']
-        rows.append({
-            'Měsíc': f"{MESICE_CZ[m['mesic']-1]} {m['rok']}{znacka}",
-            'Příjmy': f"{m['vydano_celkem']:,.0f} Kč",
-            'Výdaje': f"{m['prijato_celkem']:,.0f} Kč",
-            'Bilance': f"{bilance_val:+,.0f} Kč".replace("+", "+") if bilance_val >= 0 else f"{bilance_val:,.0f} Kč",
-        })
-    if rows:
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        prijmy  = m.get('vydano_celkem', 0)
+        vydaje  = m.get('prijato_celkem', 0)
+        vysledek = m.get('bilance', 0)
+        vy_color = "#10b981" if vysledek >= 0 else "#ef4444"
+        vy_sign  = "+" if vysledek >= 0 else ""
+        mesic_name = f"{MESICE_CZ[m['mesic']-1]} {m['rok']}"
+
+        bg = "background:rgba(255,255,255,0.04); border-radius:6px;" if je_aktualni else ""
+        marker = " ◀" if je_aktualni else ""
+
+        r1, r2, r3, r4 = st.columns([2, 2, 2, 2])
+        r1.markdown(
+            f"<div style='{bg} padding:0.3rem 0.5rem; font-size:0.9rem;'>"
+            f"<strong style='color:{'white' if je_aktualni else 'rgba(255,255,255,0.7);'}'>{mesic_name}</strong>"
+            f"<span style='color:#f5c518; font-size:0.72rem;'>{marker}</span></div>",
+            unsafe_allow_html=True,
+        )
+        r2.markdown(
+            f"<div style='padding:0.3rem 0.5rem; font-size:0.9rem; color:#10b981;'>{prijmy:,.0f} Kč</div>",
+            unsafe_allow_html=True,
+        )
+        r3.markdown(
+            f"<div style='padding:0.3rem 0.5rem; font-size:0.9rem; color:#ef4444;'>{vydaje:,.0f} Kč</div>",
+            unsafe_allow_html=True,
+        )
+        r4.markdown(
+            f"<div style='padding:0.3rem 0.5rem; font-size:0.9rem; font-weight:600; color:{vy_color};'>"
+            f"{vy_sign}{vysledek:,.0f} Kč</div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("<hr style='margin:0.1rem 0; border-color:rgba(255,255,255,0.04);'>", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════
