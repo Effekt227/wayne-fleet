@@ -10,8 +10,14 @@ from .models import Base
 import os
 from urllib.parse import urlparse
 
-# Dual-mode: PostgreSQL v cloudu (env DATABASE_URL), SQLite lokálně
+# Dual-mode: PostgreSQL v cloudu (env DATABASE_URL nebo st.secrets), SQLite lokálně
 _cloud_url = os.environ.get('DATABASE_URL', '')
+if not _cloud_url:
+    try:
+        import streamlit as st
+        _cloud_url = st.secrets.get('DATABASE_URL', '')
+    except Exception:
+        pass
 if _cloud_url:
     # Parsujeme URL a předáme parametry explicitně (pg8000 ořezává username na tečce)
     _parsed = urlparse(_cloud_url)
